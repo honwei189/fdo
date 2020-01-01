@@ -1,0 +1,35 @@
+{
+    "name": "honwei189/fdo",
+    "description": "Database ORM (with or without) helper library for PHP.  Able to connect mutiple DB at the same time.  User can use this library to replace laravel eloquent",
+    "authors": [
+        {
+            "name": "Gordon Lim",
+            "email": "honwei189@gmail.com"
+        }
+    ],
+    "require": {
+        "honwei189/flayer": "^1.0",
+        "php": ">=7.1.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "honwei189\\fdo\\": "src/"
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0-dev"
+        },
+        "laravel": {
+            "providers": [
+                "honwei189\\fdo\\fdoServiceProvider"
+            ]
+        },
+        "installer-paths": {
+            "./vendor/{$vendor}/honwei189/libs/{$name}": [
+                "honwei189/fdo"
+            ]
+        }
+    }
+}
+
