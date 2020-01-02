@@ -1,6 +1,6 @@
 {
     "name": "honwei189/fdo",
-    "description": "Database ORM (with or without) helper library for PHP.  Able to connect mutiple DB at the same time.  User can use this library to replace laravel eloquent",
+    "description": "Fast database ORM (with or without) helper library for PHP.  Able to connect mutiple DB at the same time.  User can use this library to replace laravel eloquent or use for any type of PHP projects with composer structure",
     "authors": [
         {
             "name": "Gordon Lim",
