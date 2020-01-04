@@ -26,7 +26,7 @@ foreach ($app->fdo()->q('SELECT * from users') as $row) {
     print_r($row);
 }
 
-$users = $app->fdo()->from("users");
+$users = $app->fdo()->from("users"); // Get data from table -- users
 print_r($users->where("userid='admin'")->get("id, userid, name"));
 
 var_dump($app::fdo()->is_connected());
@@ -42,7 +42,7 @@ var_dump(honwei189\container::get("fdo")->is_connected());
 
 $app->fdo()->fetch_mode(\PDO::FETCH_INTO);
 
-$app->fdo()->set_table("users");
+$app->fdo()->set_table("users"); // Get data from table -- users
 print_r($app->fdo()->where("userid='admin'")->get("id, userid, name"));
 print_r($app->fdo()->users()->get("id, userid, name"));
 
@@ -53,9 +53,9 @@ class aaa
 }
 
  
-print_r($app->fdo()->users()->fetch_mode()->limit(20)->find());
+print_r($app->fdo()->users()->fetch_mode()->limit(20)->find());  // Get data from table -- users  with default fetch mode -- PDO::FETCH_LAZY
 
-$list = $app->fdo()->ml_tor_list();
+$list = $app->fdo()->history_logs(); // Get data from table -- history_logs
 print_r($list->fetch_mode(\PDO::FETCH_INTO, new aaa)->limit(20)->order_by("id", "desc")->find("id, m_name"));
 print_r($list->limit(20)->order_by("id", "desc")->find("id, m_name"));
 ```
