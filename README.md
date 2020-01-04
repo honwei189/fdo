@@ -1,2 +1,73 @@
-# fdo
-Database ORM (with or without) helper library for PHP.  Able to connect mutiple DB at the same time.  User can use this library to replace laravel eloquent
+# FDO
+
+FDO - Fast database OOP / ORM 
+
+FDO is a PHP based library to assist user to do DB create/edit/delete/search/find and etc... It's uses ORM method to save / update data into DB.
+
+  - Easy to use
+  - Fast to build DB operate and query to save coding time
+  - OOP / ORM method
+  - Compatitable with Laravel
+  - Allows connect mutiple DB at the same time
+
+## Example
+
+```php
+<?php
+require __DIR__ . '/../vendor/autoload.php';
+
+honwei189\config::load();
+$app = new honwei189\flayer;
+$app->bind("honwei189\\fdo\\fdo");
+
+$dbh = $app->fdo()->connect(honwei189\config::get("database", "mysql"));
+
+foreach ($app->fdo()->q('SELECT * from users') as $row) {
+    print_r($row);
+}
+
+$app->fdo()->from("users");
+print_r($app->fdo()->where("userid='admin'")->get("id, userid, name"));
+
+var_dump($app::fdo()->is_connected());
+var_dump(honwei189\flayer::fdo()->is_connected());
+
+
+var_dump($app->fdo()->is_connected());
+foreach ($dbh->query('SELECT * from users') as $row) {
+    print_r($row);
+}
+
+var_dump(honwei189\container::get("fdo")->is_connected());
+
+$app->fdo()->fetch_mode(\PDO::FETCH_INTO);
+
+$app->fdo()->set_table("users");
+pre($app->fdo()->where("userid='admin'")->get("id, userid, name"));
+pre($app->fdo()->users()->get("id, userid, name"));
+
+class aaa
+{
+    public $id;
+    public $m_name;
+}
+
+
+print_r($app->fdo()->users()->fetch_mode()->limit(20)->find());
+
+print_r($app->fdo()->ml_tor_list()->fetch_mode(\PDO::FETCH_INTO, new aaa)->limit(20)->order_by("id", "desc")->find("id, m_name"));
+print_r($app->fdo()->ml_tor_list()->limit(20)->order_by("id", "desc")->find("id, m_name"));
+```
+
+### Installation
+
+To use FDO, you are requires to install [`flayer`](https://github.com/honwei189/flayer.git)
+
+```sh
+$ composer require honwei189/fqo
+```
+or
+```sh
+$ git clone https://github.com/honwei189/flayer.git
+$ git clone https://github.com/honwei189/fdo.git
+```
