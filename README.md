@@ -26,8 +26,8 @@ foreach ($app->fdo()->q('SELECT * from users') as $row) {
     print_r($row);
 }
 
-$app->fdo()->from("users");
-print_r($app->fdo()->where("userid='admin'")->get("id, userid, name"));
+$users = $app->fdo()->from("users");
+print_r($users->where("userid='admin'")->get("id, userid, name"));
 
 var_dump($app::fdo()->is_connected());
 var_dump(honwei189\flayer::fdo()->is_connected());
@@ -43,8 +43,8 @@ var_dump(honwei189\container::get("fdo")->is_connected());
 $app->fdo()->fetch_mode(\PDO::FETCH_INTO);
 
 $app->fdo()->set_table("users");
-pre($app->fdo()->where("userid='admin'")->get("id, userid, name"));
-pre($app->fdo()->users()->get("id, userid, name"));
+print_r($app->fdo()->where("userid='admin'")->get("id, userid, name"));
+print_r($app->fdo()->users()->get("id, userid, name"));
 
 class aaa
 {
@@ -52,11 +52,12 @@ class aaa
     public $m_name;
 }
 
-
+ 
 print_r($app->fdo()->users()->fetch_mode()->limit(20)->find());
 
-print_r($app->fdo()->ml_tor_list()->fetch_mode(\PDO::FETCH_INTO, new aaa)->limit(20)->order_by("id", "desc")->find("id, m_name"));
-print_r($app->fdo()->ml_tor_list()->limit(20)->order_by("id", "desc")->find("id, m_name"));
+$list = $app->fdo()->ml_tor_list();
+print_r($list->fetch_mode(\PDO::FETCH_INTO, new aaa)->limit(20)->order_by("id", "desc")->find("id, m_name"));
+print_r($list->limit(20)->order_by("id", "desc")->find("id, m_name"));
 ```
 
 ### Installation
@@ -64,7 +65,7 @@ print_r($app->fdo()->ml_tor_list()->limit(20)->order_by("id", "desc")->find("id,
 To use FDO, you are requires to install [`flayer`](https://github.com/honwei189/flayer.git)
 
 ```sh
-$ composer require honwei189/fqo
+$ composer require honwei189/fdo
 ```
 or
 ```sh
