@@ -57,7 +57,8 @@ print_r($app->fdo()->users()->fetch_mode()->limit(20)->find());  // Get data fro
 
 $list = $app->fdo()->history_logs(); // Get data from table -- history_logs
 print_r($list->fetch_mode(\PDO::FETCH_INTO, new aaa)->limit(20)->order_by("id", "desc")->find("id, m_name"));
-print_r($list->limit(20)->order_by("id", "desc")->find("id, m_name"));
+print_r($list->limit(20)->order_by("id", "desc")->cols("id, m_name")->find());
+print_r($list->limit(20)->order_by("id", "desc")->cols(["id", "m_name"])->find());
 ```
 
 ### Installation
