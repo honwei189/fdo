@@ -33,6 +33,16 @@ $insert->email = "aaa@example";
 $insert->gender = "M";
 echo $insert->store(); // or you can use $insert->save();
 
+## Altenative way to insert...
+
+foreach($this->_post as $k => $v) {
+    $insert->$k = $v;
+}
+
+$insert->soft_update(false); // true = Dry run only
+$insert->store();
+
+
 ## Update data
 $update = $app->fdo()->from("users");
 $update->name = "A.AA";
