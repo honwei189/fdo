@@ -27,6 +27,7 @@ foreach ($app->fdo()->q('SELECT * from users') as $row) {
 }
 
 $users = $app->fdo()->from("users"); // Get data from table -- users
+$users->debug(false); // false = disable debug mode.  stop printing SQL
 print_r($users->where("userid='admin'")->get("id, userid, name"));
 
 var_dump($app::fdo()->is_connected());
@@ -73,3 +74,7 @@ or
 $ git clone https://github.com/honwei189/flayer.git
 $ git clone https://github.com/honwei189/fdo.git
 ```
+
+### Documentation
+
+Coming soon...
