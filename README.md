@@ -26,6 +26,23 @@ foreach ($app->fdo()->q('SELECT * from users') as $row) {
     print_r($row);
 }
 
+## Insert data
+$insert = $app->fdo()->from("users");
+$insert->name = "AAA";
+$insert->email = "aaa@example";
+$insert->gender = "M";
+echo $insert->store(); // or you can use $insert->save();
+
+## Update data
+$update = $app->fdo()->from("users");
+$update->name = "A.AA";
+$update->update($insert->_id); // or you can use $update->save($this->_id);
+
+# Delete data
+$delete = $app->fdo()->from("users");
+$delete->by_id($insert->_id)->delete(); // or you can use $delete->delete("id = ". $insert->_id);  or you can use $delete->where("id", $insert->_id)->delete();
+
+## Retrieve data from DB
 $users = $app->fdo()->from("users"); // Get data from table -- users
 $users->debug(false); // false = disable debug mode.  stop printing SQL
 print_r($users->where("userid='admin'")->get("id, userid, name"));
