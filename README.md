@@ -35,7 +35,7 @@ echo $insert->store(); // or you can use $insert->save();
 
 ## Altenative way to insert...
 
-foreach($this->_post as $k => $v) {
+foreach($app->fdo()->_post as $k => $v) { // or $insert->_post
     $insert->$k = $v;
 }
 
