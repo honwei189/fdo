@@ -2,7 +2,7 @@
 /*
  * @creator           : Gordon Lim <honwei189@gmail.com>
  * @created           : 12/05/2019 17:43:32
- * @last modified     : 24/12/2019 22:06:44
+ * @last modified     : 28/04/2020 16:07:03
  * @last modified by  : Gordon Lim <honwei189@gmail.com>
  */
 
@@ -129,11 +129,295 @@ trait query
         return $this;
     }
 
+    public function and_get($input_key_name = null, $type = "")
+    {
+        $value = "";
+
+        if (is_null($input_key_name)) {
+            foreach ($this->_get as $k => $v) {
+                // if ($k != "sdate" && $k != "edate" && $k != "stime" && $k != "etime") {
+                if (stripos($k, "sdate") === false || stripos($k, "edate") === false || stripos($k, "stime") === false || stripos($k, "etime") === false) {
+                    if (is_value($v)) {
+                        // $v = $this->_post_value($v, $type);
+                        $v = $this->value_format($v, $type);
+
+                        if ($type == "like") {
+                            $this->where("trim(lower($k)) like '%" . trim(strtolower($v)) . "%'");
+                        } else {
+                            $this->where("$k='$v'");
+                        }
+
+                    }
+                }
+            }
+
+            return $this;
+        } else if (is_array($input_key_name)) {
+            foreach ($input_key_name as $k => $v) {
+                // if ($v != "sdate" && $v != "edate" && $v != "stime" && $v != "etime") {
+                if (stripos($v, "sdate") === false || stripos($v, "edate") === false || stripos($v, "stime") === false || stripos($v, "etime") === false) {
+                    if (is_value($v)) {
+                        // $value = $this->_post_value($this->_get[$v], $type);
+                        $value = $this->value_format($value, $type);
+                        $this->where("$v='$value'");
+                    }
+                }
+            }
+
+            return $this;
+        }
+
+        // if (isset($this->_get[$input_key_name])) {
+        //     $value = $this->_get[$input_key_name];
+        // }
+
+        $value = $this->inputs($input_key_name, $type);
+
+        if (is_value($value)) {
+            // $value = $this->_post_value($value, $type);
+            if ($type == "like") {
+                $this->where("trim(lower($input_key_name)) like '%" . trim(strtolower($value)) . "%'");
+            } else {
+                $this->where("$input_key_name='$value'");
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * SQL AND from form input
+     *
+     * Usage :
+     *
+     * $this->and_input("form_object_name", "db_table_column_name", "like"); // output = select * from example where db_table_column name like '%form_object_value%'
+     *
+     * or;
+     *
+     * $this->and_input("form_object_name", [
+     *     "(select id from example_b where name like '%{form_object_name}%')",
+     *     "{form_object_name}",
+     * ], "like");
+     *
+     * // output = select * from example where
+     *                          db_table_column_name in (select id from example_b where name like '%form_object_value%')
+     *                          and db_table_column_name = 'form_object_value'
+     *
+     *
+     * or;
+     *
+     * $this->and_input("", [
+     *     "ANY_COLUMN_NAME_YOU_LIKE in (select id from example_b where name like '%{form_object_name}%')",
+     *     "ANY_COLUMN_NAME_YOU_LIKE = '{form_object_name}'",
+     * ], "like");
+     *
+     * // output = select * from example where
+     *                          ANY_COLUMN_NAME_YOU_LIKE in (select id from example_b where name like '%form_object_value%')
+     *                          and ANY_COLUMN_NAME_YOU_LIKE = 'form_object_value'
+     *
+     * @param string $input_key_name
+     * @param string|array $column_name
+     * @param string $type
+     * @return fdo
+     */
+    public function and_input($input_key_name, $column_name, $type = "")
+    {
+        $value = "";
+
+        // if (isset($this->_post[$input_key_name])) {
+        //     $value = $this->_post[$input_key_name];
+        // } else if (isset($this->_get[$input_key_name])) {
+        //     $value = $this->_get[$input_key_name];
+        // }
+
+        if (is_array($column_name) && count($column_name) > 0) {
+            foreach ($column_name as $k => $v) {
+                if (is_value($input_key_name)) {
+                    $value = $this->value_format($this->_request[$input_key_name], $type);
+                    $value = str_replace("{$input_key_name}", $this->_request[$input_key_name], $value);
+
+                    if (is_value($value)) {
+                        if ($type == "like") {
+                            $this->where("trim(lower($v)) like '%" . trim(strtolower($value)) . "%'");
+                        } else {
+                            $this->where("$v='$value'");
+                        }
+                    }
+                } else {
+                    $value = $this->value_format($v, $type);
+                    preg_match("/\{(.*?)\}/si", $value, $reg);
+
+                    if (is_array($reg) && count($reg) > 1) {
+                        if (isset($this->_request[$reg[1]]) && is_value($this->_request[$reg[1]])) {
+                            $value = str_replace("{" . $reg[1] . "}", $this->_request[$reg[1]], $value);
+                        } else {
+                            $value = "";
+                        }
+                    }
+
+                    $reg = null;
+
+                    if (is_value($value)) {
+                        $this->where($value);
+                    }
+                }
+            }
+        } else {
+            if (is_value($input_key_name)) {
+                $value = $this->value_format($this->inputs($input_key_name, $type), $type);
+
+                if (isset($this->_post[$input_key_name])) {
+                    $value = str_replace("{$input_key_name}", $this->_request[$input_key_name], $value);
+                }
+
+                if (is_value($value)) {
+                    // $value = $this->_post_value($value, $type);
+
+                    if ($type == "like") {
+                        $this->where("trim(lower($column_name)) like '%" . trim(strtolower($value)) . "%'");
+                    } else {
+                        $this->where("$column_name='$value'");
+                    }
+                }
+
+                unset($value);
+            } else {
+                $value = $this->value_format($column_name, $type);
+                preg_match("/\{(.*?)\}/si", $value, $reg);
+
+                if (is_array($reg) && count($reg) > 1) {
+                    if (isset($this->_post[$reg[1]]) && is_value($this->_post[$reg[1]])) {
+                        $value = str_replace("{" . $reg[1] . "}", $this->_post[$reg[1]], $value);
+                    } else {
+                        $value = "";
+                    }
+                }
+
+                $this->where($value);
+
+                unset($reg);
+                unset($value);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * Generate WHERE SQL from custom data inputs.
+     *
+     * e.g :
+     *
+     * $data = ["cat" => 1, "status" => "A", "nums" => 10];
+     *
+     * $this->and_keys(["cat", "status"], $data);
+     *
+     * output :
+     *
+     * select * from xxx where cat = 1 and status = 'A'
+     *
+     * @param mixed $keys
+     * @param mixed $raws
+     * @return fdo
+     */
+    public function and_keys($keys, &$raws)
+    {
+        if (!is_array($keys)) {
+            $keys = [$keys];
+        }
+
+        foreach ($keys as $k => $v) {
+            // if (isset($raws[$k])) {
+            //     $this->and_post($k, $type);
+            // }else
+
+            if (isset($raws[$v])) {
+                $this->and($v, $raws[$v]);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * Generate WHERE statement from FORM POST.
+     *
+     * e.g :
+     *
+     * $this->and_post("date");
+     *
+     * $this->and_post(["cat", "status"]);
+     *
+     * output :
+     *
+     * select * from xxx where date = $_POST['date'] and cat = $_POST['cat] and status = $_POST['status]
+     *
+     * @param mixed $keys
+     * @param mixed $type
+     * @return fdo
+     */
+    public function and_post($input_key_name = null, $type = "")
+    {
+        $value = "";
+
+        if (is_null($input_key_name)) {
+            foreach ($this->_post as $k => $v) {
+                // if ($k != "sdate" && $k != "edate" && $k != "stime" && $k != "etime") {
+                if (stripos($k, "sdate") === false || stripos($k, "edate") === false || stripos($k, "stime") === false || stripos($k, "etime") === false) {
+                    if (is_value($v)) {
+                        // $v = $this->_post_value($v, $type);
+                        $v = $this->value_format($v, $type);
+
+                        if ($type == "like") {
+                            $this->where("trim(lower($k)) like '%" . trim(strtolower($v)) . "%'");
+                        } else {
+                            $this->where("$k='$v'");
+                        }
+                    }
+                }
+            }
+
+            return $this;
+        } else if (is_array($input_key_name)) {
+            foreach ($input_key_name as $k => $v) {
+                // if ($v != "sdate" && $v != "edate" && $v != "stime" && $v != "etime") {
+                if (stripos($v, "sdate") === false || stripos($v, "edate") === false || stripos($v, "stime") === false || stripos($v, "etime") === false) {
+                    if (is_value($v)) {
+                        // $value = $this->_post_value($this->_get[$v], $type);
+                        $value = $this->value_format($value, $type);
+
+                        if ($type == "like") {
+                            $this->where("trim(lower($v)) like '%" . trim(strtolower($value)) . "%'");
+                        } else {
+                            $this->where("$v='$value'");
+                        }
+                    }
+                }
+            }
+
+            return $this;
+        }
+
+        $value = $this->inputs($input_key_name, $type);
+
+        // if (isset($this->_post[$input_key_name])) {
+        //     $value = $this->_post[$input_key_name];
+        // }
+
+        if (is_value($value)) {
+            // $value = $this->_post_value($value, $type);
+            // $this->where("$column_name='$value'");
+            $this->where("$input_key_name='$value'");
+        }
+
+        return $this;
+    }
+
     /**
      * Generate SQL where id = $id
      *
-     * @param mixed $id
-     * @return mixed
+     * @param integer|string $id
+     * @return fdo
      */
     public function by_id($id)
     {
@@ -174,7 +458,7 @@ trait query
      * return $this->find();
      *
      * @param string|array $table_cols column name.  e.g:  id
-     * @return FDO
+     * @return fdo
      */
     public function cols($table_cols, $table_name = null)
     {
@@ -1062,6 +1346,48 @@ trait query
     }
 
     /**
+     * SQL where LIKE statement
+     *
+     * example :
+     *
+     * $this->like("name", "abc"); //output select * from abc where trim(lower(name)) like '%abc%';
+     * $this->like(["name", "telno"], "abc"); //output select * from abc where ( trim(lower(name)) like '%abc%' or trim(lower(telno)) like '%abc%');
+     * $this->like("abc", ["name", "telno"]); //output select * from abc where ( trim(lower(abc)) like '%name%' or trim(lower(abc)) like '%telno%');
+     *
+     * @param string|array $column_name
+     * @param string $value
+     * @return fdo
+     */
+    public function like($column_name, $value)
+    {
+        $sql = "";
+        if (is_array($column_name)) {
+            $_ = [];
+            foreach ($column_name as $k => $v) {
+                $_[] = "trim(lower($v)) like '%" . trim(strtolower($value)) . "%'";
+            }
+
+            $sql = "(" . join(" or ", $_) . ")";
+            unset($_);
+        } else {
+            if(is_array($value)){
+                $_ = [];
+                foreach ($value as $k => $v) {
+                    $_[] = "trim(lower($column_name)) like '%" . trim(strtolower($v)) . "%'";
+                }
+
+                $sql = "(" . join(" or ", $_) . ")";
+                unset($_);
+
+            }else{
+                $sql = "trim(lower($column_name)) like '%" . trim(strtolower($value)) . "%'";
+            }
+        }
+
+        return $this->where($sql);
+    }
+
+    /**
      * Limit numbers of rows data
      *
      * @param mixed $get_nums_of_data To fetch how many data per once.  mySQL support max unsigned big integer is 18446744073709551615, whereas PHP 32bit supported max size is 2147483647, 64bit is 9223372036854775807
@@ -1146,6 +1472,80 @@ trait query
     }
 
     /**
+     * SQL where NOT statement
+     *
+     * example :
+     *
+     * $this->not("name", "abc"); //output select * from abc where name != 'abc';
+     * $this->not(["name", "telno"], "abc"); //output select * from abc where ( name != '%abc%' and telno != 'abc');
+     *
+     * @param string|array $column_name
+     * @param string $value
+     * @return db_helper
+     */
+    public function not($column_name, $value)
+    {
+        $sql = "";
+        if (is_array($column_name)) {
+            $_ = [];
+            foreach ($column_name as $k => $v) {
+                $_[] = "$v != '" . trim($value) . "'";
+            }
+
+            $sql = "(" . join(" and ", $_) . ")";
+            unset($_);
+        } else {
+            $sql = "$column_name != '" . trim($value) . "'";
+        }
+
+        return $this->where($sql);
+    }
+
+    /**
+     * SQL where OR statement
+     *
+     * example :
+     *
+     * $this->or("name", "abc"); //output select * from abc where id = 1 or ( trim(lower(name)) = 'abc' );
+     * $this->or(["name", "telno"], "abc"); //output select * from abc where id = 1 and ( trim(lower(name)) = 'abc' or trim(lower(telno)) = 'abc');
+     * $this->or("abc", ["name", "telno"]); //output select * from abc where id = 1 and ( trim(lower(abc)) = 'name' or trim(lower(abc)) = 'telno');
+     *
+     * @param string|array $column_name
+     * @param string $value
+     * @return fdo
+     */
+    function  or ($column_name, $value) {
+        $sql = "";
+        if (is_array($column_name)) {
+            $_ = [];
+            foreach ($column_name as $k => $v) {
+                $_[] = "trim(lower($v)) = '" . trim(strtolower($value)) . "'";
+            }
+
+            $sql = "(" . join(" or ", $_) . ")";
+            unset($_);
+
+            return $this->where($sql);
+        } else {
+            if(is_array($value)){
+                $_ = [];
+                foreach ($value as $k => $v) {
+                    $_[] = "trim(lower($column_name)) = '" . trim(strtolower($v)) . "'";
+                }
+
+                $sql = "(" . join(" or ", $_) . ")";
+                unset($_);
+
+                return $this->where($sql);
+            }else{
+                $this->_where .= (is_value($this->_where) ? " or " : " "). "trim(lower($column_name)) = '" . trim(strtolower($value)) . "'";
+            }
+        }
+
+        return $this;
+    }
+
+    /**
      * Set SQL ordering sequence.  Applicable for find(), get_all(), data_all()
      *
      * @param string $sorting_cols cols name and sorting sequence.  e.g:  name asc, date desc
@@ -1158,6 +1558,103 @@ trait query
             $this->_order_by .= ", $sorting_cols $ordering_sequence";
         } else {
             $this->_order_by = " order by $sorting_cols $ordering_sequence";
+        }
+
+        return $this;
+    }
+
+    /**
+     * Generate SQL OR statement for form input
+     *
+     * Usage :
+     *
+     * $this->or_input("form_object_name", "db_table_column_name", "like"); // output = select * from example where db_table_column name like '%form_object_value%'
+     *
+     * or;
+     *
+     * $this->or_input("form_object_name", [
+     *     "(select id from example_b where name like '%{form_object_name}%')",
+     *     "{form_object_name}",
+     * ], "like");
+     *
+     * // output = select * from example where
+     *                          db_table_column_name in (select id from example_b where name like '%form_object_value%')
+     *                          and db_table_column_name = 'form_object_value'
+     *
+     *
+     * or;
+     *
+     * $this->or_input("", [
+     *     "ANY_COLUMN_NAME_YOU_LIKE in (select id from example_b where name like '%{form_object_name}%')",
+     *     "ANY_COLUMN_NAME_YOU_LIKE = '{form_object_name}'",
+     * ], "like");
+     *
+     * // output = select * from example where
+     *                          ANY_COLUMN_NAME_YOU_LIKE in (select id from example_b where name like '%form_object_value%')
+     *                          and ANY_COLUMN_NAME_YOU_LIKE = 'form_object_value'
+     *
+     * @param string $input_key_name
+     * @param string|array $column_name
+     * @param string $type
+     * @return fdo
+     */
+    public function or_input($input_key_name, $column_name, $type = "")
+    {
+        $value = "";
+
+        // if (isset($this->_post[$input_key_name])) {
+        //     $value = $this->_post[$input_key_name];
+        // } else if (isset($this->_get[$input_key_name])) {
+        //     $value = $this->_get[$input_key_name];
+        // }
+
+        if (is_array($column_name) && count($column_name) > 0) {
+            if (is_value($input_key_name)) {
+                $value = $this->value_format($this->_request[$input_key_name], $type);
+                $value = str_replace("{$input_key_name}", $this->_request[$input_key_name], $value);
+
+                if ($type == "like") {
+                    $this->like($column_name, $value);
+                } else {
+                    $this->or($column_name, $value);
+                }
+            }
+        } else {
+            if (is_value($input_key_name)) {
+                $value = $this->value_format($this->inputs($input_key_name, $type), $type);
+
+                if (isset($this->_post[$input_key_name])) {
+                    $value = str_replace("{$input_key_name}", $this->_request[$input_key_name], $value);
+                }
+
+                if (is_value($value)) {
+                    // $value = $this->_post_value($value, $type);
+
+                    if ($type == "like") {
+                        $this->where("trim(lower($column_name)) like '%" . trim(strtolower($value)) . "%'");
+                    } else {
+                        $this->where("$column_name='$value'");
+                    }
+                }
+
+                unset($value);
+            } else {
+                $value = $this->value_format($column_name, $type);
+                preg_match("/\{(.*?)\}/si", $value, $reg);
+
+                if (is_array($reg) && count($reg) > 1) {
+                    if (isset($this->_post[$reg[1]]) && is_value($this->_post[$reg[1]])) {
+                        $value = str_replace("{" . $reg[1] . "}", $this->_post[$reg[1]], $value);
+                    } else {
+                        $value = "";
+                    }
+                }
+
+                $this->where($value);
+
+                unset($reg);
+                unset($value);
+            }
         }
 
         return $this;
@@ -1755,7 +2252,7 @@ trait query
      * return $this->find();
      *
      * @param string|array $table_cols column name.  e.g:  id
-     * @return FDO
+     * @return fdo
      */
     public function select($col_name, $table_name = null)
     {
@@ -1863,7 +2360,7 @@ trait query
 
     /**
      * Generate date with $_POST['sdate'] and $_POST['edate']
-     * 
+     *
      * @param string $table_field_name Table field's name  e.g: birth_date
      * @param array $data $_POST or $this->_post
      * @return string
@@ -1889,7 +2386,7 @@ trait query
 
         unset($validate);
 
-        $sql    = "";
+        $sql = "";
 
         if (is_null($data)) {
             $data = $this->_post;
@@ -1912,7 +2409,7 @@ trait query
 
     /**
      * Generate time with $_POST['stime'] and $_POST['etime']
-     * 
+     *
      * @param string $table_field_name Table field's name  e.g: login_time
      * @param array $data $_POST or $this->_post
      * @return string
@@ -1930,7 +2427,7 @@ trait query
 
         unset($validate);
 
-        $sql    = "";
+        $sql = "";
 
         if (is_null($data)) {
             $data = $this->_post;
@@ -1953,7 +2450,7 @@ trait query
 
     /**
      * Generate "from date" and "to date" with $_POST['sdate'] and $_POST['edate']
-     * 
+     *
      * @param string $table_field_name_from Table field's name  e.g: log_start_date
      * @param string $table_field_name_to Table field's name  e.g: log_end_date
      * @param array $data $_POST or $this->_post
@@ -1980,7 +2477,7 @@ trait query
 
         unset($validate);
 
-        $sql    = "";
+        $sql = "";
 
         if (is_null($data)) {
             $data = $this->_post;
@@ -2003,7 +2500,7 @@ trait query
 
     /**
      * Generate "from time" and "to time" with $_POST['sdate'] and $_POST['edate']
-     * 
+     *
      * @param string $table_field_name_from Table field's name  e.g: log_start_time
      * @param string $table_field_name_to Table field's name  e.g: log_end_time
      * @param array $data $_POST or $this->_post
@@ -2022,7 +2519,7 @@ trait query
 
         unset($validate);
 
-        $sql    = "";
+        $sql = "";
 
         if (is_null($data)) {
             $data = $this->_post;
@@ -2045,7 +2542,7 @@ trait query
 
     /**
      * Generate create date & time with $_POST['sdate'] and $_POST['edate'], $_POST['stime'] and $_POST['etime']
-     * 
+     *
      * @param array $data $_POST or $this->_post
      * @param array $table_name_or_alias_name Table alias name.  e.g:  $table_name_or_alias_name = a  ( select * from table_name as a )
      * @return string

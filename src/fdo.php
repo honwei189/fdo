@@ -2,7 +2,7 @@
 /*
  * @creator           : Gordon Lim <honwei189@gmail.com>
  * @created           : 06/05/2019 21:54:01
- * @last modified     : 29/12/2019 19:49:49
+ * @last modified     : 24/04/2020 16:22:49
  * @last modified by  : Gordon Lim <honwei189@gmail.com>
  */
 
@@ -177,6 +177,10 @@ class fdo
      * or;
      *
      * $this->is_exists_any_table_name("status='A'")->userid("admin");
+     * 
+     * or;
+     * 
+     * return $this->users()->like("home_url", $_SERVER['HTTP_HOST'])->is_exist();
      *
      *
      * is_exists_ = Predefined name
@@ -290,6 +294,10 @@ class fdo
                     return (is_value($this->get($this->_table, $method_name, $arguments[0], $method_name, null)) ? true : false);
                 }
             }
+        }
+
+        if (stripos($method_name, "is_exist") !== false) {
+            return (is_value($this->get()) ? true : false);
         }
 
         $instance = clone $this;
@@ -1476,6 +1484,8 @@ class fdo
             `action` VARCHAR(3),
             `action_dscpt` VARCHAR(300),
             `uri` varchar(800),
+            `request_method` varchar(10),
+            `request_header` text,
             `sql` TEXT NULL,
             `error` varchar(500) NULL,
             `trace` TEXT NULL,
@@ -1498,11 +1508,13 @@ class fdo
             " . (is_value($this->action_type) ? "'" . $this->action_type . "'" : "null") . " ,
             " . (is_value($this->action_dscpt) ? "'" . $this->action_dscpt . "'" : "null") . " ,
             '" . $_SERVER['REQUEST_URI'] . "',
+            '" . $this->http->type . "',
+            '" . tostring($this->http->header) . "',
             '" . addslashes($sql) . "',
             '" . addslashes($error) . "',
             '" . addslashes($error_trace) . "',
             " . (isset($inputs) && is_array($inputs) && count($inputs) > 0 ? "'" . addslashes(json_encode($inputs)) . "'" : "null") . ",
-            '" . ($this->http->header == "json" ? addslashes($this->http->_raws) : (is_array($_REQUEST) ? addslashes(json_encode($_REQUEST)) : "")) . "',
+            '" . ($this->http->type == "json" ? addslashes($this->http->_raws) : (is_array($_REQUEST) ? addslashes(json_encode($_REQUEST)) : "")) . "',
             '" . $this->getip() . "',
             now(),
             " . (isset($this->_user) ? "'" . $this->_user . "'" : "'system'") .
