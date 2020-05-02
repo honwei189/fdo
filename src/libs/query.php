@@ -2,7 +2,7 @@
 /*
  * @creator           : Gordon Lim <honwei189@gmail.com>
  * @created           : 12/05/2019 17:43:32
- * @last modified     : 02/05/2020 15:10:31
+ * @last modified     : 02/05/2020 16:42:21
  * @last modified by  : Gordon Lim <honwei189@gmail.com>
  */
 
@@ -1769,7 +1769,11 @@ trait query
                                 unset($data['queryString']);
 
                                 foreach ($data as $k => $v) {
-                                    $data[$k] = trim(flayer::crypto()->encrypt($v));
+                                    if (stripos($k, "_id") !== false || (string) $k == "id" || substr($k, -2) == "id") {
+                                        $data[$k] = trim(flayer::crypto()->encrypt($v));
+                                    }else{
+                                        $data[$k] = trim($v);
+                                    }
                                 }
                             } else {
                                 $vars = (array) $data;
