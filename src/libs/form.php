@@ -2,7 +2,7 @@
 /*
  * @creator           : Gordon Lim <honwei189@gmail.com>
  * @created           : 12/05/2019 17:08:39
- * @last modified     : 23/12/2019 21:44:01
+ * @last modified     : 02/05/2020 15:11:02
  * @last modified by  : Gordon Lim <honwei189@gmail.com>
  */
 
@@ -243,9 +243,9 @@ trait form
      *
      * select * from xxx where date = $_POST['date'] and cat = $_POST['cat] and status = $_POST['status]
      *
-     * @param array|string $keys $_POST key name
-     * @param string $type Variable data type.  e.g:  crypt, date, number, like (SQL search by like)
-     * @return form
+     * @param mixed $keys
+     * @param mixed $type
+     * @return fdo
      */
     public function and_post($input_key_name = null, $type = "")
     {
@@ -253,8 +253,10 @@ trait form
 
         if (is_null($input_key_name)) {
             foreach ($this->_post as $k => $v) {
+                // if ($k != "sdate" && $k != "edate" && $k != "stime" && $k != "etime") {
                 if (stripos($k, "sdate") === false || stripos($k, "edate") === false || stripos($k, "stime") === false || stripos($k, "etime") === false) {
-                    if ($this->is_value($v)) {
+                    if (is_value($v)) {
+                        // $v = $this->_post_value($v, $type);
                         $v = $this->value_format($v, $type);
 
                         if ($type == "like") {
@@ -269,8 +271,10 @@ trait form
             return $this;
         } else if (is_array($input_key_name)) {
             foreach ($input_key_name as $k => $v) {
+                // if ($v != "sdate" && $v != "edate" && $v != "stime" && $v != "etime") {
                 if (stripos($v, "sdate") === false || stripos($v, "edate") === false || stripos($v, "stime") === false || stripos($v, "etime") === false) {
-                    if ($this->is_value($v)) {
+                    if (is_value($v)) {
+                        // $value = $this->_post_value($this->_get[$v], $type);
                         $value = $this->value_format($value, $type);
 
                         if ($type == "like") {
@@ -287,7 +291,13 @@ trait form
 
         $value = $this->inputs($input_key_name, $type);
 
-        if ($this->is_value($value)) {
+        // if (isset($this->_post[$input_key_name])) {
+        //     $value = $this->_post[$input_key_name];
+        // }
+
+        if (is_value($value)) {
+            // $value = $this->_post_value($value, $type);
+            // $this->where("$column_name='$value'");
             $this->where("$input_key_name='$value'");
         }
 

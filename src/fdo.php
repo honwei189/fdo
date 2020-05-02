@@ -2,7 +2,7 @@
 /*
  * @creator           : Gordon Lim <honwei189@gmail.com>
  * @created           : 06/05/2019 21:54:01
- * @last modified     : 24/04/2020 16:22:49
+ * @last modified     : 02/05/2020 16:25:24
  * @last modified by  : Gordon Lim <honwei189@gmail.com>
  */
 
@@ -46,6 +46,7 @@ class fdo
     private $_set_sql_to_sub   = false;
     private $_soft_update      = false;
     private $_show_sql         = false;
+    private $_user = null;
 
     // protected $require = ["helper", "crud"];
     // protected $require = ["honwei189\\data"];
@@ -94,6 +95,7 @@ class fdo
         }
 
         $this->fetch_mode();
+        $this->_user = \honwei189\data::get("user");
     }
 
     /**
@@ -1282,7 +1284,6 @@ class fdo
                 `crby` VARCHAR(150) NOT NULL,
                 PRIMARY KEY (`id`),
                 INDEX `logs_idx` (`id`, `action`, `tbl`, `ref_id`)
-                /* INDEX `logs_" . $this->_table . "_idx` (`id`, `action`, `tbl`, `ref_id`) */
             )
             COLLATE='utf8_general_ci'
             ENGINE=MyISAM;";
@@ -1367,7 +1368,11 @@ class fdo
             } else {
                 // If not on transaction mode, auto create log table
                 // $sql = "$schema replace into logs_" . $this->_table . " select null, null, '$action', $id, null, null, '" . json_encode($inputs) . "', '" . (is_array($raws) ? json_encode($raws) : "") . "', '" . Common::getIP() . "', 0, now(), " . (isset($this->_user) ? "'" . $this->_user . "'" : "'system'") . ";";
-                $sql = "$schema replace into " . ((!$this->_multi_log_table) ? "logs" : "logs_" . $this->_table) . "
+                $stmt = $this->instance->prepare($schema);
+                $stmt->closeCursor();
+                $stmt->execute();
+
+                $sql = "replace into " . ((!$this->_multi_log_table) ? "logs" : "logs_" . $this->_table) . "
                 select
                     null,
                     null,
@@ -1380,7 +1385,6 @@ class fdo
                 }
 
                 $sql .= "
-                    '$this->_table',
                     $id,
                     null,
                     '" . addslashes(json_encode($inputs)) . "',
@@ -1391,7 +1395,7 @@ class fdo
                     now(),
                     " . (isset($this->_user) ? "'" . $this->_user . "'" : "'system'") .
                     ";";
-
+                
                 $stmt = $this->instance->prepare($sql);
 
                 try {
@@ -1499,6 +1503,17 @@ class fdo
         COLLATE='utf8_general_ci'
         ENGINE=MyISAM;
         ";
+
+        $check = $this->read_one_sql("SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'logs_exceptional'");
+
+        // $check = $this->sql_find("SHOW TABLES LIKE '".$this->db_table."'");
+
+        if (is_array($check) && count($check) > 0) {
+        } else {
+            $stmt = $this->instance->prepare($schema);
+            $stmt->closeCursor();
+            $stmt->execute();
+        }
 
         // '" . trim(addslashes($this->debug_print_backtrace())) . "',
 
