@@ -2,7 +2,7 @@
 /*
  * @creator           : Gordon Lim <honwei189@gmail.com>
  * @created           : 12/05/2019 17:43:32
- * @last modified     : 02/05/2020 16:03:05
+ * @last modified     : 02/05/2020 20:57:36
  * @last modified by  : Gordon Lim <honwei189@gmail.com>
  */
 
@@ -249,7 +249,7 @@ trait operate
             } else {
                 $_debug_print       = $this->_debug_print;
                 $this->_debug_print = false;
-                $this->_raws        = $this->findBy(null, $sql_where, join(", ", array_keys($this->_vars)));
+                $this->_raws        = $this->debug(false)->findBy(null, $sql_where, join(", ", array_keys($this->_vars)));
                 $this->_debug_print = $_debug_print;
                 unset($_debug_print);
 

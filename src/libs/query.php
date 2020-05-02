@@ -2,7 +2,7 @@
 /*
  * @creator           : Gordon Lim <honwei189@gmail.com>
  * @created           : 12/05/2019 17:43:32
- * @last modified     : 02/05/2020 16:42:21
+ * @last modified     : 02/05/2020 20:55:24
  * @last modified by  : Gordon Lim <honwei189@gmail.com>
  */
 
@@ -549,9 +549,11 @@ trait query
                 exit;
             }
         } else {
+            
             if ($print_sql) {
                 $this->print_sql_format($sql);
             }
+            
             if ($fetch_count) {
                 return $this->_receive_raws($this->read_one_sql($sql, false, \PDO::FETCH_COLUMN)[0]);
             } else {

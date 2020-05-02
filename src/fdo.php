@@ -2,7 +2,7 @@
 /*
  * @creator           : Gordon Lim <honwei189@gmail.com>
  * @created           : 06/05/2019 21:54:01
- * @last modified     : 02/05/2020 16:25:24
+ * @last modified     : 02/05/2020 21:05:33
  * @last modified by  : Gordon Lim <honwei189@gmail.com>
  */
 
@@ -19,12 +19,12 @@ namespace honwei189\fdo;
  * @link        https://github.com/honwei189/fdo/
  * @link        https://appsw.dev
  * @link        https://justtest.app
- * @version     "1.0.0" 
- * @since       "1.0.0" 
+ * @version     "1.0.0"
+ * @since       "1.0.0"
  */
 class fdo
 {
-    public $action_dscpt       = null;
+    public $action_description = null;
     public $action_type        = null;
     public $error              = null;
     public $fetch_mode         = null;
@@ -34,6 +34,7 @@ class fdo
     public $_passthrough       = false;
     public $_verify_sql        = false;
     private $base_path         = "";
+    private $http              = null;
     private $_count_by         = "";
     private $_debug_print      = false;
     private $_driver_options   = [];
@@ -46,7 +47,7 @@ class fdo
     private $_set_sql_to_sub   = false;
     private $_soft_update      = false;
     private $_show_sql         = false;
-    private $_user = null;
+    private $_user             = null;
 
     // protected $require = ["helper", "crud"];
     // protected $require = ["honwei189\\data"];
@@ -179,9 +180,9 @@ class fdo
      * or;
      *
      * $this->is_exists_any_table_name("status='A'")->userid("admin");
-     * 
+     *
      * or;
-     * 
+     *
      * return $this->users()->like("home_url", $_SERVER['HTTP_HOST'])->is_exist();
      *
      *
@@ -1395,7 +1396,7 @@ class fdo
                     now(),
                     " . (isset($this->_user) ? "'" . $this->_user . "'" : "'system'") .
                     ";";
-                
+
                 $stmt = $this->instance->prepare($sql);
 
                 try {
@@ -1504,16 +1505,21 @@ class fdo
         ENGINE=MyISAM;
         ";
 
-        $check = $this->read_one_sql("SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'logs_exceptional'");
+        // $check = $this->read_one_sql("SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'logs_exceptional'");
 
-        // $check = $this->sql_find("SHOW TABLES LIKE '".$this->db_table."'");
+        // // $check = $this->sql_find("SHOW TABLES LIKE '".$this->db_table."'");
 
-        if (is_array($check) && count($check) > 0) {
-        } else {
-            $stmt = $this->instance->prepare($schema);
-            $stmt->closeCursor();
-            $stmt->execute();
-        }
+        // if (is_array($check) && count($check) > 0) {
+        // } else {
+        //     $stmt = $this->instance->prepare($schema);
+        //     $stmt->closeCursor();
+        //     $stmt->execute();
+        // }
+
+        $stmt = $this->instance->prepare($schema);
+        $stmt->closeCursor();
+        $stmt->execute();
+
 
         // '" . trim(addslashes($this->debug_print_backtrace())) . "',
 
