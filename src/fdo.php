@@ -2,7 +2,7 @@
 /*
  * @creator           : Gordon Lim <honwei189@gmail.com>
  * @created           : 06/05/2019 21:54:01
- * @last modified     : 02/05/2020 21:05:33
+ * @last modified     : 03/05/2020 14:05:49
  * @last modified by  : Gordon Lim <honwei189@gmail.com>
  */
 
@@ -1446,7 +1446,7 @@ class fdo
 
     public function write_exceptional($sql, $error, $error_trace)
     {
-        $this->http = \honwei189\flayer::bind("\\honwei189\\http");
+        $this->http = ( \honwei189\flayer::exists("\\honwei189\\http") ? \honwei189\flayer::get("\\honwei189\\http") : \honwei189\flayer::bind("\\honwei189\\http") );
 
         $begin = false;
         if ($this->instance->inTransaction()) {

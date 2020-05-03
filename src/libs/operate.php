@@ -2,7 +2,7 @@
 /*
  * @creator           : Gordon Lim <honwei189@gmail.com>
  * @created           : 12/05/2019 17:43:32
- * @last modified     : 02/05/2020 20:57:36
+ * @last modified     : 03/05/2020 14:59:27
  * @last modified by  : Gordon Lim <honwei189@gmail.com>
  */
 
@@ -356,7 +356,9 @@ trait operate
                     }
                 }
 
-                $sql = "SET @uuid := 0; update $this->_table set " . join(", ", $this->_vars) . ", id = (SELECT @uuid := id) where " . $sql_where;
+                // $sql = "SET @uuid := 0; update $this->_table set " . join(", ", $this->_vars) . ", id = (SELECT @uuid := id) where " . $sql_where;
+
+                $sql = "update $this->_table set " . join(", ", $this->_vars) . ", id = (SELECT @uuid := id) where " . $sql_where;
 
             }
 
@@ -430,12 +432,14 @@ trait operate
                         }
                     }
 
+                    
+                    $this->execute("SET @uuid := 0;");
                     $this->execute($sql);
 
                     if ($new_data) {
                         $this->_id = $this->last_id();
                     } else {
-                        $this->_id = (int) $this->read_one_sql("SELECT @ uuid;", \PDO::FETCH_COLUMN, 0);
+                        $this->_id = (int) $this->read_one_sql("SELECT @uuid;", \PDO::FETCH_COLUMN, 0);
                     }
 
                     $stat = !$this->is_error;
