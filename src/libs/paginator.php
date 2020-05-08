@@ -23,8 +23,6 @@ namespace honwei189\fdo;
  * @subpackage
  * @author      Gordon Lim <honwei189@gmail.com>
  * @link        https://github.com/honwei189/fdo/
- * @link        https://appsw.dev
- * @link        https://justtest.app
  * @version     "1.0.5" Remove "SQL_CALC_FOUND_ROWS" and change method because of it become deprecated function in mySQL 8 and will be removed in the future
  * @since       "1.0.5" Remove "SQL_CALC_FOUND_ROWS" and change method because of it become deprecated function in mySQL 8 and will be removed in the future
  */
