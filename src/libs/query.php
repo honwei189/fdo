@@ -2,7 +2,7 @@
 /*
  * @creator           : Gordon Lim <honwei189@gmail.com>
  * @created           : 12/05/2019 17:43:32
- * @last modified     : 06/06/2020 15:38:17
+ * @last modified     : 08/08/2020 15:31:20
  * @last modified by  : Gordon Lim <honwei189@gmail.com>
  */
 
@@ -731,6 +731,8 @@ trait query
             $this->set_encrypt_id();
         }
 
+        $mode = null;
+
         if (is_value($this->_where)) {
             list($sql, $mode)              = $this->gen_select_sql($table, $id, $table_cols);
             $this->_where                  = "";
@@ -1086,7 +1088,7 @@ trait query
             $sql = "(" . join(" or ", $_) . ")";
             unset($_);
         } else {
-            if(is_array($value)){
+            if (is_array($value)) {
                 $_ = [];
                 foreach ($value as $k => $v) {
                     $_[] = "trim(lower($column_name)) like '%" . trim(strtolower($v)) . "%'";
@@ -1095,7 +1097,7 @@ trait query
                 $sql = "(" . join(" or ", $_) . ")";
                 unset($_);
 
-            }else{
+            } else {
                 $sql = "trim(lower($column_name)) like '%" . trim(strtolower($value)) . "%'";
             }
         }
@@ -1243,7 +1245,7 @@ trait query
 
             return $this->where($sql);
         } else {
-            if(is_array($value)){
+            if (is_array($value)) {
                 $_ = [];
                 foreach ($value as $k => $v) {
                     $_[] = "trim(lower($column_name)) = '" . trim(strtolower($v)) . "'";
@@ -1253,8 +1255,8 @@ trait query
                 unset($_);
 
                 return $this->where($sql);
-            }else{
-                $this->_where .= (is_value($this->_where) ? " or " : " "). "trim(lower($column_name)) = '" . trim(strtolower($value)) . "'";
+            } else {
+                $this->_where .= (is_value($this->_where) ? " or " : " ") . "trim(lower($column_name)) = '" . trim(strtolower($value)) . "'";
             }
         }
 
@@ -1771,7 +1773,7 @@ trait query
                                 foreach ($data as $k => $v) {
                                     if (stripos($k, "_id") !== false || (string) $k == "id" || substr($k, -2) == "id") {
                                         $data[$k] = trim(flayer::crypto()->encrypt($v));
-                                    }else{
+                                    } else {
                                         $data[$k] = trim($v);
                                     }
                                 }
@@ -2885,7 +2887,8 @@ trait query
         $sql          = "";
         $table_prefix = "";
         $mode         = \PDO::FETCH_INTO;
-        $cols         = array();
+        $cols         = [];
+        $_            = [];
 
         if (is_array($this->_table_join) || is_array($this->_table_joins) || is_array($this->_table_left_joins_table)) {
             $table_prefix = (is_value($this->_table_alias) ? $this->_table_alias : $this->_table) . ".";
