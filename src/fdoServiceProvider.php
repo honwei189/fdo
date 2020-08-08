@@ -2,7 +2,7 @@
 /*
  * @creator           : Gordon Lim <honwei189@gmail.com>
  * @created           : 06/05/2019 21:54:39
- * @last modified     : 23/12/2019 21:46:48
+ * @last modified     : 05/06/2020 21:16:54
  * @last modified by  : Gordon Lim <honwei189@gmail.com>
  */
 
@@ -19,8 +19,8 @@ use Illuminate\Support\ServiceProvider;
  * @subpackage
  * @author      Gordon Lim <honwei189@gmail.com>
  * @link        https://github.com/honwei189/html/
- * @version     "1.0.0" 
- * @since       "1.0.0" 
+ * @version     "1.0.0"
+ * @since       "1.0.0"
  */
 class fdoServiceProvider extends ServiceProvider
 {
@@ -31,12 +31,17 @@ class fdoServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //$this->app->bind(fdo::class);
-
+        // $this->app->bind(fdo::class);
         $this->app->booting(function() {
             $loader = AliasLoader::getInstance();
-            $loader->alias('fdo', fdo::class);
+            // $loader->alias('fdo', fdo::class);
+            $loader->alias(fdo::class, 'fdo');
         });
+
+        // App::bind('fdo', function()
+        // {
+        //     return new fdo;
+        // });
     }
 
     /**
@@ -46,9 +51,11 @@ class fdoServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        $this->app->singleton('fdo', function () {
-            return new fdo;
-        });
+        // $this->app->singleton('fdo', function () {
+        //     return new fdo;
+        // });
+
+        $this->app->make('honwei189\fdo\fdo');
     }
 
     public function provides()

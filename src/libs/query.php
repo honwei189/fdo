@@ -2,7 +2,7 @@
 /*
  * @creator           : Gordon Lim <honwei189@gmail.com>
  * @created           : 12/05/2019 17:43:32
- * @last modified     : 02/05/2020 20:55:24
+ * @last modified     : 06/06/2020 15:38:17
  * @last modified by  : Gordon Lim <honwei189@gmail.com>
  */
 
@@ -126,7 +126,7 @@ trait query
 
         return $this;
     }
-    
+
     /**
      * Generate SQL where id = $id
      *
@@ -547,11 +547,11 @@ trait query
                 exit;
             }
         } else {
-            
+
             if ($print_sql) {
                 $this->print_sql_format($sql);
             }
-            
+
             if ($fetch_count) {
                 return $this->_receive_raws($this->read_one_sql($sql, false, \PDO::FETCH_COLUMN)[0]);
             } else {
@@ -1137,7 +1137,7 @@ trait query
             }
         }
 
-        if (!isset($_GET['p']{0})) {
+        if (!isset($_GET['p']) && !is_value($_GET['p'])) {
             $this->page_id    = 1;
             $this->limit_data = 0;
         } else {
@@ -1162,7 +1162,7 @@ trait query
      */
     public function limit_sql($sql, $nums_data_to_fetch = 10)
     {
-        if (!isset($_GET['p_id']{0})) {
+        if (!isset($_GET['p_id']) && !is_value($_GET['p_id'])) {
             $this->page_id    = 1;
             $this->limit_data = 0;
         } else {
