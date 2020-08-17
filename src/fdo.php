@@ -2,7 +2,7 @@
 /*
  * @creator           : Gordon Lim <honwei189@gmail.com>
  * @created           : 06/05/2019 21:54:01
- * @last modified     : 03/05/2020 14:05:49
+ * @last modified     : 17/08/2020 19:20:18
  * @last modified by  : Gordon Lim <honwei189@gmail.com>
  */
 
@@ -442,7 +442,7 @@ class fdo
         foreach ($array as $key => $val) {
             if (is_array($val)) {
 
-                $val = self::array_implode($glue, $separator, $val);
+                $val = $this->array_implode($glue, $separator, $val);
             }
 
             $string[] = "{$key}{$glue}{$val}";
@@ -708,9 +708,9 @@ class fdo
             }
 
             $ret[] = '#' . str_pad($i - $traces_to_ignore, 3, ' ')
-                . (isset($object) && is_array($object) && count($object) > 0 ? self::array_implode(", ", "\n\t\t", $object) : $object)
-                . (isset($call['function']) && is_array($call['function']) && count($call['function']) > 0 ? self::array_implode(", ", "\n\t\t", $call['function']) : $call['function'])
-                . (isset($call['args']) && is_array($call['args']) ? '(' . self::array_implode(", ", "\n\t\t", $call['args']) . ')' : (isset($call['args']) && is_value($call['args']) ? "{$call['args']}" : ""))
+                . (isset($object) && is_array($object) && count($object) > 0 ? $this->array_implode(", ", "\n\t\t", $object) : $object)
+                . (isset($call['function']) && is_array($call['function']) && count($call['function']) > 0 ? $this->array_implode(", ", "\n\t\t", $call['function']) : $call['function'])
+                . (isset($call['args']) && is_array($call['args']) ? '(' . $this->array_implode(", ", "\n\t\t", $call['args']) . ')' : (isset($call['args']) && is_value($call['args']) ? "{$call['args']}" : ""))
                 . ' called at [' . $call['file'] . ':' . $call['line'] . ']';
         }
 
@@ -1344,9 +1344,9 @@ class fdo
                 $sql .= "
                     $id,
                     null,
-                    '" . addslashes(json_encode($inputs)) . "',
-                    '" . (is_array($_REQUEST) ? addslashes(json_encode($_REQUEST)) : "") . "',
-                    '" . (is_array($raws) ? addslashes(json_encode($raws)) : "") . "',
+                    '" . (json_encode($inputs)) . "',
+                    '" . (is_array($_REQUEST) ? (json_encode($_REQUEST)) : "") . "',
+                    '" . (is_array($raws) ? (json_encode($raws)) : "") . "',
                     '" . $this->getIP() . "',
                     0,
                     now(),
@@ -1386,9 +1386,9 @@ class fdo
                 $sql .= "
                     $id,
                     null,
-                    '" . addslashes(json_encode($inputs)) . "',
-                    '" . (is_array($_REQUEST) ? addslashes(json_encode($_REQUEST)) : "") . "',
-                    '" . (is_array($raws) ? addslashes(json_encode($raws)) : "") . "',
+                    '" . (json_encode($inputs)) . "',
+                    '" . (is_array($_REQUEST) ? (json_encode($_REQUEST)) : "") . "',
+                    '" . (is_array($raws) ? (json_encode($raws)) : "") . "',
                     '" . $this->getIP() . "',
                     0,
                     now(),
@@ -1470,7 +1470,7 @@ class fdo
         }
 
         $_REQUEST = filter_var_array($_REQUEST, FILTER_SANITIZE_STRING);
-        $_REQUEST = filter_var_array($_REQUEST, FILTER_SANITIZE_MAGIC_QUOTES);
+        // $_REQUEST = filter_var_array($_REQUEST, FILTER_SANITIZE_MAGIC_QUOTES);
         // $_REQUEST = filter_var(
         //     $_REQUEST,
         //     FILTER_CALLBACK,
@@ -1532,8 +1532,8 @@ class fdo
             '" . addslashes($sql) . "',
             '" . addslashes($error) . "',
             '" . addslashes($error_trace) . "',
-            " . (isset($inputs) && is_array($inputs) && count($inputs) > 0 ? "'" . addslashes(json_encode($inputs)) . "'" : "null") . ",
-            '" . ($this->http->type == "json" ? addslashes($this->http->_raws) : (is_array($_REQUEST) ? addslashes(json_encode($_REQUEST)) : "")) . "',
+            " . (isset($inputs) && is_array($inputs) && count($inputs) > 0 ? "'" . (json_encode($inputs)) . "'" : "null") . ",
+            '" . ($this->http->type == "json" ? ($this->http->_raws) : (is_array($_REQUEST) ? (json_encode($_REQUEST)) : "")) . "',
             '" . $this->getip() . "',
             now(),
             " . (isset($this->_user) ? "'" . $this->_user . "'" : "'system'") .
