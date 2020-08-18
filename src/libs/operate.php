@@ -2,7 +2,7 @@
 /*
  * @creator           : Gordon Lim <honwei189@gmail.com>
  * @created           : 12/05/2019 17:43:32
- * @last modified     : 17/08/2020 19:15:37
+ * @last modified     : 18/08/2020 19:37:05
  * @last modified by  : Gordon Lim <honwei189@gmail.com>
  */
 
@@ -282,7 +282,7 @@ trait operate
                 $raws = $this->_vars;
 
                 foreach ($this->_vars as $k => $v) {
-                    if (isv($v)) {
+                    if (str($v)) {
                         if ($v != "now()" && $v != "current_date" && $v != "current_timestamp" && $v != "year(curdate())" && $v != "month(curdate())" && stripos($v, "(case when") === false && (substr($v, 0, 1) != "(" && substr($v, 1, -1) != ")")) {
 
                             if (substr($v, 0, 1) == "(" && substr($v, 1, -1) == ")" && strpos($v, "+") !== false) {
@@ -329,7 +329,7 @@ trait operate
                 $raws = $this->_vars;
 
                 foreach ($this->_vars as $k => $v) {
-                    if (isv($v)) {
+                    if (str($v)) {
                         if ($v != "now()" && $v != "current_date" && $v != "current_timestamp" && $v != "year(curdate())" && $v != "month(curdate())" && stripos($v, "(case when") === false && (substr($v, 0, 1) != "(" && substr($v, 1, -1) != ")")) {
 
                             if (substr($v, 0, 1) == "(" && substr($v, 1, -1) == ")" && strpos($v, "+") !== false) {
@@ -536,7 +536,7 @@ trait operate
             unset($this->{"updated_by"});
 
             foreach ($this->_vars as $k => $v) {
-                if (isv($v)) {
+                if (str($v)) {
                     if ($v != "now()" && $v != "current_date" && $v != "current_timestamp" && $v != "year(curdate())" && $v != "month(curdate())" && stripos($v, "(case when") === false && (substr($v, 0, 1) != "(" && substr($v, 1, -1) != ")")) {
                         if (strpos($v, "(") !== false && strpos($v, ")") !== false && strpos($v, "+") !== false) {
                             $this->_vars[$k] = "$v";
@@ -691,7 +691,7 @@ trait operate
             $raws = $this->_vars;
 
             if ($sql_where === null) {
-                if (!isv($this->_where)) {
+                if (!str($this->_where)) {
                     $sql_where = "crby = '" . $this->_user . "' and id = " . (int) $this->_id;
                 } else {
                     $sql_where = $this->_where;
@@ -735,7 +735,7 @@ trait operate
             unset($this->{"created_by"});
 
             foreach ($this->_vars as $k => $v) {
-                if (isv($v)) {
+                if (str($v)) {
                     if ($v != "now()" && $v != "current_date" && $v != "current_timestamp" && $v != "year(curdate())" && $v != "month(curdate())" && stripos($v, "(case when") === false && (substr($v, 0, 1) != "(" && substr($v, 1, -1) != ")")) {
                         if (strpos($v, "(") !== false && strpos($v, ")") !== false && strpos($v, "+") !== false) {
                             $this->_vars[$k] = "$k = $v";
