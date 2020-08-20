@@ -2,7 +2,7 @@
 /*
  * @creator           : Gordon Lim <honwei189@gmail.com>
  * @created           : 12/05/2019 17:43:32
- * @last modified     : 08/08/2020 15:31:20
+ * @last modified     : 20/08/2020 20:35:35
  * @last modified by  : Gordon Lim <honwei189@gmail.com>
  */
 
@@ -385,20 +385,19 @@ trait query
                 $this->_sql_only = false;
                 return $stm;
             } else {
-                $stm = $this->_sql;
+                // $stm = $this->_sql;
 
                 if ($fetch_count) {
-                    return $this->read_one_sql($stm, false, \PDO::FETCH_COLUMN)[0];
+                    return $this->read_one_sql($this->_sql, false, \PDO::FETCH_COLUMN)[0];
                 } else {
                     if ($this->_fetch_one) {
                         $this->_fetch_one = false;
-                        return $this->read_one_sql($stm, false, $mode);
+                        return $this->read_one_sql($this->_sql, false, $mode);
                     } else {
+                        $stm = $this->_sql;
                         if ($this->_sql_display_num) {
                             $this->_sql_display_num = false;
-                            $stm                    = "select ( @rownum := (@rownum + 1) ) as no, original_sql.* from ($stm) original_sql";
-
-                            $this->execute("SET @rownum := 0;");
+                            $stm                    = $this->set_display_num($this->_sql);
                         }
 
                         return $this->read_all_sql($stm, false, $mode);
@@ -450,11 +449,28 @@ trait query
 
         $stm = "select " . $this->_gen_select_cols($select_cols_name)[0] . " from " . $this->_table . (is_value($this->_table_alias) ? " as " . $this->_table_alias : "") . " where " . (is_null($find_by_column_name) ? "$data" : "$find_by_column_name = '$data'") . (is_value($this->_where) ? " and " . $this->_where : "") . $this->_group_by . $this->_order_by . $this->_limit;
 
-        if (is_value($this->_limit)) {
-            // $stm                        = preg_replace("/^select/isU", "select SQL_CALC_FOUND_ROWS", $stm);
-            // $stm                        = preg_replace("/^\(select/isU", "(select SQL_CALC_FOUND_ROWS", $stm);
-            $this->PageSeparator['SQL'] = $stm;
-        }
+        // if (str($this->_limit)) {
+        // $stm                        = preg_replace("/^select/isU", "select SQL_CALC_FOUND_ROWS", $stm);
+        // $stm                        = preg_replace("/^\(select/isU", "(select SQL_CALC_FOUND_ROWS", $stm);
+        // $this->PageSeparator['SQL'] = $stm;
+        // $_ = preg_replace("/join.*?(?=\\)|$)/mi", "", $stm);
+        // preg_match("|select\s*(.*?)\s*from|siU", $_, $reg);
+
+        // $this->_db->PageSeparator['SQL'] = $stm;
+
+        // if (str($reg[1])) {
+        //     $this->_db->PageSeparator['SQL'] = str_replace($reg[1], " count(*) as count ", $this->_db->PageSeparator['SQL']);
+        // }
+
+        // unset($reg);
+
+        // $re = ["/ORDER BY.*?(?=\\)|$)/mi", '/.*(\limit\s+.*)/is'];
+
+        // $this->_db->PageSeparator['SQL'] = preg_replace($re, "", $this->_db->PageSeparator['SQL']);
+        // unset($re);
+        // unset($_);
+        // $this->_db->PageSeparator['SQL'] = $stm;
+        // }
 
         $this->clear(false);
 
@@ -478,9 +494,33 @@ trait query
                 } else {
                     if ($this->_sql_display_num) {
                         $this->_sql_display_num = false;
-                        $stm                    = "select ( @rownum := (@rownum + 1) ) as no, original_sql.* from ($stm) original_sql";
+                        // $stm                    = "select ( @rownum := (@rownum + 1) ) as no, original_sql.* from ($stm) original_sql";
 
-                        $this->execute("SET @rownum := 0;");
+                        // $this->execute("SET @rownum := 0;");
+                        preg_match("|select\s*(.*?)\s*from|isU", $stm, $reg);
+
+                        $first_field = "";
+
+                        if (str($reg[1])) {
+                            $field = preg_split('|,|', $reg[1], -1, PREG_SPLIT_NO_EMPTY);
+
+                            if (isa($field)) {
+                                foreach ($field as $k => $v) {
+                                    if (!preg_match("|\s*as\s*|", $v)) {
+                                        $first_field = $v;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        if (str($first_field)) {
+                            $stm = preg_replace("|^select|isU", "select row_number() over(order by $first_field desc) as no, ", $stm);
+                        }
+
+                        unset($first_field);
+                        unset($reg);
+
                     }
 
                     return $this->_receive_raws($this->read_all_sql($stm, $this->fetch_mode->mode));
@@ -2051,6 +2091,84 @@ trait query
     {
         $this->_sum_by = "sum($col) as sum";
         return $this;
+    }
+
+    public function set_display_num($sql)
+    {
+        if ($this->version() >= 8) {
+            preg_match("|select\s*(.*?)\s*from|isU", $sql, $reg);
+
+            $first_field = "";
+
+            if (str($reg[1])) {
+                $field = preg_split('|,|', $reg[1], -1, PREG_SPLIT_NO_EMPTY);
+
+                if (isa($field)) {
+                    foreach ($field as $k => $v) {
+                        if (!preg_match("|\s*as\s*|", $v)) {
+                            $first_field = trim($v);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // if (str($first_field)) {
+            //     $sql = preg_replace("|^select|isU", "select row_number() over(order by $first_field desc) as no, ", $sql);
+            // }
+
+            // unset($first_field);
+            // unset($reg);
+
+            // $spl = preg_split("|\s*union\s*|isU", $sql, -1, PREG_SPLIT_NO_EMPTY);
+
+            // if (isa($spl)) {
+            //     $_sql = [];
+            //     foreach ($spl as $v) {
+            //         preg_match("|select\s*(.*?)\s*from|isU", $v, $reg);
+
+            //         $first_field = "";
+
+            //         if (str($reg[1])) {
+            //             $field = preg_split('|,|', $reg[1], -1, PREG_SPLIT_NO_EMPTY);
+
+            //             if (isa($field)) {
+            //                 foreach ($field as $field_v) {
+            //                     if (!preg_match("|\s*as\s*|", $field_v)) {
+            //                         $first_field = trim($field_v);
+            //                         break;
+            //                     }
+            //                 }
+            //             }
+            //         }
+
+            //         if (str($first_field)) {
+            //             $_sql[] = trim(preg_replace("|^select|isU", "select row_number() over(order by $first_field desc) as no,", $v));
+            //         } else {
+            //             $_sql[] = trim($v);
+            //         }
+
+            //         unset($first_field);
+            //         unset($reg);
+            //     }
+
+            //     $sql = join(" union ", $_sql);
+
+            // }
+
+            if (str($first_field)) {
+                $sql = "select row_number() over(order by $first_field desc) as no, t.* from ( $sql ) as t";
+            }
+
+            unset($first_field);
+            unset($reg);
+        } else {
+            $sql = "select ( @rownum := (@rownum + 1) ) as no, original_sql.* from ( $sql ) original_sql";
+
+            $this->execute("SET @rownum := 0;");
+        }
+
+        return $sql;
     }
 
     public function set_sql($sql)

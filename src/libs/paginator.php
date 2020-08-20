@@ -2,7 +2,7 @@
 /*
  * @creator           : Gordon Lim <honwei189@gmail.com>
  * @created           :
- * @last modified     : 23/12/2019 21:44:37
+ * @last modified     : 20/08/2020 20:38:34
  * @last modified by  : Gordon Lim <honwei189@gmail.com>
  */
 
@@ -71,10 +71,14 @@ trait paginator
         }
 
         if (is_null($nums_data)) {
-            $sql = "select count($col) from " . $this->_table . (is_value($this->_where) ? " where " . $this->_where : "");
-
+            // $sql = "select count($col) from " . $this->_table . (is_value($this->_where) ? " where " . $this->_where : "");
+            $sql            = $this->_sql;
+            $re             = ["/ORDER BY.*?(?=\\)|$)/mi", '/.*(\limit\s+.*)/is'];
+            $sql            = preg_replace($re, "", $sql);
+            $sql            = "select count(*), t.* from ( $sql ) as t";
             $rows_resources = $this->instance->query($sql);
             $total          = $rows_resources->fetch(\PDO::FETCH_COLUMN, \PDO::FETCH_ORI_NEXT, 0);
+            unset($re);
             unset($rows_resources);
         }
 

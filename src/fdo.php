@@ -2,7 +2,7 @@
 /*
  * @creator           : Gordon Lim <honwei189@gmail.com>
  * @created           : 06/05/2019 21:54:01
- * @last modified     : 17/08/2020 19:20:18
+ * @last modified     : 20/08/2020 16:05:40
  * @last modified by  : Gordon Lim <honwei189@gmail.com>
  */
 
@@ -93,6 +93,7 @@ class fdo
             }
         }
 
+        $this->version();
         $this->fetch_mode();
         $this->_user = \honwei189\data::get("user");
     }
@@ -1245,6 +1246,22 @@ class fdo
     {
         $this->_verify_sql = $bool;
         return $this;
+    }
+
+    public function version(){
+        $version = \honwei189\data::get("DB_VERSION");
+
+        if (!str($version)){
+            $version = $this->instance->query('select version()')->fetchColumn();
+
+            preg_match("/^[0-9\.]+/", $version, $match);
+
+            $version = $match[0];
+            \honwei189\data::set("DB_VERSION", $version);
+            unset($match);
+        }
+
+        return $version;
     }
 
     public function write_audit_log($id, $action, $raws, $inputs)
