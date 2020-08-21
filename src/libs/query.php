@@ -2,7 +2,7 @@
 /*
  * @creator           : Gordon Lim <honwei189@gmail.com>
  * @created           : 12/05/2019 17:43:32
- * @last modified     : 20/08/2020 20:35:35
+ * @last modified     : 21/08/2020 20:45:18
  * @last modified by  : Gordon Lim <honwei189@gmail.com>
  */
 
@@ -42,6 +42,7 @@ trait query
     private $_multi_log_table = false;
     private $_raws;
     private $_sql                    = "";
+    private $_sql_without_limit      = "";
     private $_sql_display_num        = false;
     private $_sql_only               = false;
     private $_sql_without_select     = false;
@@ -74,7 +75,7 @@ trait query
 
     // public function __get($arg)
     // {
-    //     if (isset($this->_vars[$arg]) && is_value($this->_vars[$arg])) {
+    //     if (isset($this->_vars[$arg]) && str($this->_vars[$arg])) {
     //         return $this->_vars[$arg];
     //     }
     // }
@@ -148,8 +149,8 @@ trait query
             );
         }
 
-        $prefix       = (is_value($this->_table_alias) ? $this->_table_alias : $this->_table) . ".";
-        $this->_where = (is_value($this->_where) ? $this->_where . " and " : "") . (is_array($id) ? $prefix . "id in (" . join(", ", $id) . ")" : $prefix . "id = " . (int) $id);
+        $prefix       = (str($this->_table_alias) ? $this->_table_alias : $this->_table) . ".";
+        $this->_where = (str($this->_where) ? $this->_where . " and " : "") . (is_array($id) ? $prefix . "id in (" . join(", ", $id) . ")" : $prefix . "id = " . (int) $id);
         $this->_id    = $id;
         return $this;
     }
@@ -180,7 +181,7 @@ trait query
 
         if ((is_array($this->_table_join) && count($this->_table_join) > 0) || (is_array($this->_table_joins) && count($this->_table_joins) > 0) || (is_array($this->_table_left_joins) && count($this->_table_left_joins) > 0)) {
             if (is_null($table_name)) {
-                $prefix = (is_value($this->_table_alias) ? $this->_table_alias : $this->_table) . ".";
+                $prefix = (str($this->_table_alias) ? $this->_table_alias : $this->_table) . ".";
             } else {
                 $prefix = $table_name . ".";
             }
@@ -193,7 +194,7 @@ trait query
                 }
             }
 
-            $this->_table_cols .= (is_value($this->_table_cols) ? ", " : "") . join(", ", $table_cols);
+            $this->_table_cols .= (str($this->_table_cols) ? ", " : "") . join(", ", $table_cols);
         } else {
             $_ = explode(",", $table_cols);
             foreach ($_ as $k => $v) {
@@ -205,7 +206,7 @@ trait query
             $table_cols = join(", ", $_);
             unset($_);
 
-            $this->_table_cols .= (is_value($this->_table_cols) ? ", " : "") . (isset($this->_table_join[$table_name]) ? $this->_table_join[$table_name][1] . "." : "") . $table_cols;
+            $this->_table_cols .= (str($this->_table_cols) ? ", " : "") . (isset($this->_table_join[$table_name]) ? $this->_table_join[$table_name][1] . "." : "") . $table_cols;
         }
 
         return $this;
@@ -279,7 +280,7 @@ trait query
      */
     public function fetch_mode($mode = \PDO::FETCH_LAZY, $class_name = "fdoData")
     {
-        // if (is_value($class_name)){
+        // if (str($class_name)){
         //     $rs->setFetchMode($mode, $class_name);
         // }
         if (!is_object($class_name)) {
@@ -322,7 +323,7 @@ trait query
         $mode        = $this->fetch_mode->mode;
         $fetch_count = false;
 
-        if (is_value($this->_count_by)) {
+        if (str($this->_count_by)) {
             $fetch_count   = true;
             $this->_limit  = "";
             $this->_max_by = "";
@@ -358,7 +359,7 @@ trait query
             // $mode = $_[1];
         }
 
-        // if (is_value($this->_limit)) {
+        // if (str($this->_limit)) {
         //     $stm = preg_replace("/^select/isU", "select SQL_CALC_FOUND_ROWS", $stm);
         //     $stm = preg_replace("/^\(select/isU", "(select SQL_CALC_FOUND_ROWS", $stm);
         // }
@@ -369,7 +370,7 @@ trait query
 
         // $this->clear(false);
 
-        if (is_value($this->_table_alias_temp)) {
+        if (str($this->_table_alias_temp)) {
             $this->_table_alias      = $this->_table_alias_temp;
             $this->_table_alias_temp = null;
         }
@@ -437,17 +438,17 @@ trait query
 
         $fetch_count = false;
 
-        if (is_value($this->_count_by)) {
+        if (str($this->_count_by)) {
             $fetch_count   = true;
             $this->_limit  = "";
             $this->_max_by = "";
         }
 
-        if ($select_cols_name != "*" && is_value($this->_table_cols)) {
+        if ($select_cols_name != "*" && str($this->_table_cols)) {
             $select_cols_name = "";
         }
 
-        $stm = "select " . $this->_gen_select_cols($select_cols_name)[0] . " from " . $this->_table . (is_value($this->_table_alias) ? " as " . $this->_table_alias : "") . " where " . (is_null($find_by_column_name) ? "$data" : "$find_by_column_name = '$data'") . (is_value($this->_where) ? " and " . $this->_where : "") . $this->_group_by . $this->_order_by . $this->_limit;
+        $stm = "select " . $this->_gen_select_cols($select_cols_name)[0] . " from " . $this->_table . (str($this->_table_alias) ? " as " . $this->_table_alias : "") . " where " . (is_null($find_by_column_name) ? "$data" : "$find_by_column_name = '$data'") . (str($this->_where) ? " and " . $this->_where : "") . $this->_group_by . $this->_order_by . $this->_limit;
 
         // if (str($this->_limit)) {
         // $stm                        = preg_replace("/^select/isU", "select SQL_CALC_FOUND_ROWS", $stm);
@@ -474,7 +475,7 @@ trait query
 
         $this->clear(false);
 
-        if (is_value($this->_table_alias_temp)) {
+        if (str($this->_table_alias_temp)) {
             $this->_table_alias      = $this->_table_alias_temp;
             $this->_table_alias_temp = null;
         }
@@ -556,11 +557,11 @@ trait query
         $fetch_count = false;
         $debug       = $this->_debug_print;
 
-        if (is_value($this->_count_by)) {
+        if (str($this->_count_by)) {
             $fetch_count = true;
         }
 
-        if ($select_cols_name != "*" && is_value($this->_table_cols)) {
+        if ($select_cols_name != "*" && str($this->_table_cols)) {
             $select_cols_name = "";
         }
 
@@ -568,15 +569,15 @@ trait query
             $debug = false;
         }
 
-        if (is_null($find_by_column_name) && !is_value($data)) {
+        if (is_null($find_by_column_name) && !str($data)) {
             return false;
         }
 
-        $sql = "select " . $this->_gen_select_cols($select_cols_name)[0] . " from " . $this->_table . (is_value($this->_table_alias) ? " as " . $this->_table_alias : "") . " where " . (is_null($find_by_column_name) ? "$data" : "$find_by_column_name = '$data'");
+        $sql = "select " . $this->_gen_select_cols($select_cols_name)[0] . " from " . $this->_table . (str($this->_table_alias) ? " as " . $this->_table_alias : "") . " where " . (is_null($find_by_column_name) ? "$data" : "$find_by_column_name = '$data'");
 
         $this->clear(false);
 
-        if (is_value($this->_table_alias_temp)) {
+        if (str($this->_table_alias_temp)) {
             $this->_table_alias      = $this->_table_alias_temp;
             $this->_table_alias_temp = null;
         }
@@ -616,14 +617,14 @@ trait query
 
         $fetch_count = false;
 
-        if (is_value($this->_count_by)) {
+        if (str($this->_count_by)) {
             $fetch_count   = true;
             $this->_limit  = "";
             $this->_max_by = "";
 
         }
 
-        if ($select_cols_name != "*" && is_value($this->_table_cols)) {
+        if ($select_cols_name != "*" && str($this->_table_cols)) {
             $select_cols_name = "";
         }
 
@@ -649,11 +650,11 @@ trait query
             $mode = $_[1];
         }
 
-        $sql .= (is_value($this->_where) || is_value($this->_table_join) || is_value($this->_table_joins) ? " and " : " where ") . (is_value($this->_table_alias) ? $this->_table_alias . "." : "") . "id = " . (int) $id;
+        $sql .= (str($this->_where) || str($this->_table_join) || str($this->_table_joins) ? " and " : " where ") . (str($this->_table_alias) ? $this->_table_alias . "." : "") . "id = " . (int) $id;
 
         $this->clear(false);
 
-        if (is_value($this->_table_alias_temp)) {
+        if (str($this->_table_alias_temp)) {
             $this->_table_alias      = $this->_table_alias_temp;
             $this->_table_alias_temp = null;
         }
@@ -697,11 +698,11 @@ trait query
      */
     public function get($table = null, $table_cols = null, $id = null, $query_by = "id", $column_num = null)
     {
-        if (is_value($this->_where) || is_value($this->_table_cols) || is_null($table_cols)) {
+        if (str($this->_where) || str($this->_table_cols) || is_null($table_cols)) {
             $col   = null;
             $count = false;
 
-            if (is_value($this->_count_by)) {
+            if (str($this->_count_by)) {
                 $count = true;
             }
 
@@ -727,7 +728,7 @@ trait query
             $this->_table_left_joins       = null;
             $this->_table_left_joins_table = null;
 
-            if (is_value($this->_table_alias_temp)) {
+            if (str($this->_table_alias_temp)) {
                 $this->_table_alias      = $this->_table_alias_temp;
                 $this->_table_alias_temp = null;
             }
@@ -773,7 +774,7 @@ trait query
 
         $mode = null;
 
-        if (is_value($this->_where)) {
+        if (str($this->_where)) {
             list($sql, $mode)              = $this->gen_select_sql($table, $id, $table_cols);
             $this->_where                  = "";
             $this->_order_by               = "";
@@ -789,7 +790,7 @@ trait query
             $this->_table_left_joins       = null;
             $this->_table_left_joins_table = null;
 
-            if (is_value($this->_table_alias_temp)) {
+            if (str($this->_table_alias_temp)) {
                 $this->_table_alias      = $this->_table_alias_temp;
                 $this->_table_alias_temp = null;
             }
@@ -901,10 +902,10 @@ trait query
      */
     public function inner_join($table_name, $join_to_table, $alias_name, $join_conditions)
     {
-        $alias = (is_value($alias_name) ? $alias_name : $table_name);
+        $alias = (str($alias_name) ? $alias_name : $table_name);
 
         $this->_table_left_joins[$join_to_table][$alias] = " inner join $table_name as $alias_name " . (is_array($join_conditions) && count($join_conditions) > 0 ? join(" and ", $join_conditions) : " ON ($join_conditions)");
-        $this->_table_left_joins_table[$alias]           = (is_value($alias_name) ? $alias_name : $table_name);
+        $this->_table_left_joins_table[$alias]           = (str($alias_name) ? $alias_name : $table_name);
 
         return $this;
     }
@@ -927,7 +928,7 @@ trait query
      */
     public function join($table_name, $join_coditions, $alias_name = null)
     {
-        $this->_table_join[$table_name] = [(is_value($alias_name) ? $table_name . " as " . $alias_name : $table_name . " as " . $table_name), (is_value($alias_name) ? $alias_name : $table_name), $join_coditions];
+        $this->_table_join[$table_name] = [(str($alias_name) ? $table_name . " as " . $alias_name : $table_name . " as " . $table_name), (str($alias_name) ? $alias_name : $table_name), $join_coditions];
 
         return $this;
     }
@@ -959,17 +960,17 @@ trait query
     {
         if (isset($this->_table_join[$table_name])) {
             if (is_array($table_cols)) {
-                $this->_table_cols .= (is_value($this->_table_cols) ? ", " : "") . join(", ", $table_cols);
+                $this->_table_cols .= (str($this->_table_cols) ? ", " : "") . join(", ", $table_cols);
             } else {
-                $this->_table_cols .= (is_value($this->_table_cols) ? ", " : "") . $table_cols;
+                $this->_table_cols .= (str($this->_table_cols) ? ", " : "") . $table_cols;
             }
         } else {
             foreach ($this->_table_join as $k => $v) {
                 if (isset($v[1]) && $v[1] == $table_name) {
                     if (is_array($table_cols)) {
-                        $this->_table_cols .= (is_value($this->_table_cols) ? ", " : "") . join(", " . $table_name . ".", $table_cols);
+                        $this->_table_cols .= (str($this->_table_cols) ? ", " : "") . join(", " . $table_name . ".", $table_cols);
                     } else {
-                        $this->_table_cols .= (is_value($this->_table_cols) ? ", " : "") . $table_name . "." . $table_cols;
+                        $this->_table_cols .= (str($this->_table_cols) ? ", " : "") . $table_name . "." . $table_cols;
                     }
                 }
             }
@@ -996,10 +997,10 @@ trait query
      */
     public function joins($table_name, $join_to_table, $alias_name, $join_coditions)
     {
-        $alias = (is_value($alias_name) ? $alias_name : $table_name);
+        $alias = (str($alias_name) ? $alias_name : $table_name);
 
         $this->_table_joins[$join_to_table][$alias] = " join $table_name as $alias_name ON ($join_coditions)";
-        $this->_table_joins_table[$alias]           = (is_value($alias_name) ? $alias_name : $table_name);
+        $this->_table_joins_table[$alias]           = (str($alias_name) ? $alias_name : $table_name);
 
         return $this;
     }
@@ -1034,7 +1035,7 @@ trait query
                     $table_cols[$k] = $table_name . "." . trim($v);
                 }
 
-                $this->_table_cols .= (is_value($this->_table_cols) ? ", " : "") . join(", ", $table_cols);
+                $this->_table_cols .= (str($this->_table_cols) ? ", " : "") . join(", ", $table_cols);
             } else {
                 $_ = explode(",", $table_cols);
                 foreach ($_ as $k => $v) {
@@ -1044,7 +1045,7 @@ trait query
                 $table_cols = join(", ", $_);
                 unset($_);
 
-                $this->_table_cols .= (is_value($this->_table_cols) ? ", " : "") . $table_cols;
+                $this->_table_cols .= (str($this->_table_cols) ? ", " : "") . $table_cols;
             }
         }
 
@@ -1069,10 +1070,10 @@ trait query
      */
     public function left_join($table_name, $join_to_table, $alias_name, $join_conditions)
     {
-        $alias = (is_value($alias_name) ? $alias_name : $table_name);
+        $alias = (str($alias_name) ? $alias_name : $table_name);
 
         $this->_table_left_joins[$join_to_table][$alias] = " left join $table_name as $alias_name " . (is_array($join_conditions) && count($join_conditions) > 0 ? join(" and ", $join_conditions) : " ON ($join_conditions)");
-        $this->_table_left_joins_table[$alias]           = (is_value($alias_name) ? $alias_name : $table_name);
+        $this->_table_left_joins_table[$alias]           = (str($alias_name) ? $alias_name : $table_name);
 
         return $this;
     }
@@ -1095,10 +1096,10 @@ trait query
      */
     public function left_outer_join($table_name, $join_to_table, $alias_name, $join_conditions)
     {
-        $alias = (is_value($alias_name) ? $alias_name : $table_name);
+        $alias = (str($alias_name) ? $alias_name : $table_name);
 
         $this->_table_left_joins[$join_to_table][$alias] = " left outer join $table_name as $alias_name " . (is_array($join_conditions) && count($join_conditions) > 0 ? join(" and ", $join_conditions) : " ON ($join_conditions)");
-        $this->_table_left_joins_table[$alias]           = (is_value($alias_name) ? $alias_name : $table_name);
+        $this->_table_left_joins_table[$alias]           = (str($alias_name) ? $alias_name : $table_name);
 
         return $this;
     }
@@ -1163,11 +1164,11 @@ trait query
             $get_nums_of_data = 100;
             $start_from_nums  = 0;
 
-            if (isset($data['start_from_nums']) && isset($data['nums_data']) && is_value($data['start_from_nums']) && is_value($data['nums_data'])) {
+            if (isset($data['start_from_nums']) && isset($data['nums_data']) && str($data['start_from_nums']) && str($data['nums_data'])) {
                 $get_nums_of_data = (int) $data['nums_data'];
                 $start_from_nums  = ((int) $data['start_from_nums'] - 1);
             } else {
-                if (isset($data['nums_data']) && is_value($data['nums_data'])) {
+                if (isset($data['nums_data']) && str($data['nums_data'])) {
                     $get_nums_of_data = (int) $data['nums_data'];
                 }
             }
@@ -1179,7 +1180,7 @@ trait query
             }
         }
 
-        if (!isset($_GET['p']) && !is_value($_GET['p'])) {
+        if (!isset($_GET['p']) && !str($_GET['p'])) {
             $this->page_id    = 1;
             $this->limit_data = 0;
         } else {
@@ -1204,7 +1205,7 @@ trait query
      */
     public function limit_sql($sql, $nums_data_to_fetch = 10)
     {
-        if (!isset($_GET['p_id']) && !is_value($_GET['p_id'])) {
+        if (!isset($_GET['p_id']) && !str($_GET['p_id'])) {
             $this->page_id    = 1;
             $this->limit_data = 0;
         } else {
@@ -1296,7 +1297,7 @@ trait query
 
                 return $this->where($sql);
             } else {
-                $this->_where .= (is_value($this->_where) ? " or " : " ") . "trim(lower($column_name)) = '" . trim(strtolower($value)) . "'";
+                $this->_where .= (str($this->_where) ? " or " : " ") . "trim(lower($column_name)) = '" . trim(strtolower($value)) . "'";
             }
         }
 
@@ -1312,7 +1313,7 @@ trait query
      */
     public function order_by($sorting_cols, $ordering_sequence = "")
     {
-        if (is_value($this->_order_by)) {
+        if (str($this->_order_by)) {
             $this->_order_by .= ", $sorting_cols $ordering_sequence";
         } else {
             $this->_order_by = " order by $sorting_cols $ordering_sequence";
@@ -1367,7 +1368,7 @@ trait query
         // }
 
         if (is_array($column_name) && count($column_name) > 0) {
-            if (is_value($input_key_name)) {
+            if (str($input_key_name)) {
                 $value = $this->value_format($this->_request[$input_key_name], $type);
                 $value = str_replace("{$input_key_name}", $this->_request[$input_key_name], $value);
 
@@ -1378,14 +1379,14 @@ trait query
                 }
             }
         } else {
-            if (is_value($input_key_name)) {
+            if (str($input_key_name)) {
                 $value = $this->value_format($this->inputs($input_key_name, $type), $type);
 
                 if (isset($this->_post[$input_key_name])) {
                     $value = str_replace("{$input_key_name}", $this->_request[$input_key_name], $value);
                 }
 
-                if (is_value($value)) {
+                if (str($value)) {
                     // $value = $this->_post_value($value, $type);
 
                     if ($type == "like") {
@@ -1401,7 +1402,7 @@ trait query
                 preg_match("/\{(.*?)\}/si", $value, $reg);
 
                 if (is_array($reg) && count($reg) > 1) {
-                    if (isset($this->_post[$reg[1]]) && is_value($this->_post[$reg[1]])) {
+                    if (isset($this->_post[$reg[1]]) && str($this->_post[$reg[1]])) {
                         $value = str_replace("{" . $reg[1] . "}", $this->_post[$reg[1]], $value);
                     } else {
                         $value = "";
@@ -1479,7 +1480,7 @@ trait query
     {
         $this->_fetch_one = true;
 
-        if (isset($id) && is_value($id)) {
+        if (isset($id) && str($id)) {
             return $this->by_id($id)->find();
         } else {
             return $this->find();
@@ -1988,10 +1989,10 @@ trait query
      */
     public function right_outer_join($table_name, $join_to_table, $alias_name, $join_conditions)
     {
-        $alias = (is_value($alias_name) ? $alias_name : $table_name);
+        $alias = (str($alias_name) ? $alias_name : $table_name);
 
         $this->_table_left_joins[$join_to_table][$alias] = " right outer join $table_name as $alias_name " . (is_array($join_conditions) && count($join_conditions) > 0 ? join(" and ", $join_conditions) : " ON ($join_conditions)");
-        $this->_table_left_joins_table[$alias]           = (is_value($alias_name) ? $alias_name : $table_name);
+        $this->_table_left_joins_table[$alias]           = (str($alias_name) ? $alias_name : $table_name);
 
         return $this;
     }
@@ -2207,11 +2208,11 @@ trait query
      */
     public function sql_search_date($table_field_name, &$data)
     {
-        if (isset($data['sdate']) && is_value($data['sdate'])) {
+        if (isset($data['sdate']) && str($data['sdate'])) {
             $data['sdate'] = auto_date($data['sdate'], "Y-m-d");
         }
 
-        if (isset($data['edate']) && is_value($data['edate'])) {
+        if (isset($data['edate']) && str($data['edate'])) {
             $data['edate'] = auto_date($data['edate'], "Y-m-d");
         }
 
@@ -2232,14 +2233,14 @@ trait query
             $data = $this->_post;
         }
 
-        if (isset($data['sdate']) && isset($data['edate']) && is_value($data['sdate']) && is_value($data['edate'])) {
+        if (isset($data['sdate']) && isset($data['edate']) && str($data['sdate']) && str($data['edate'])) {
             $sql .= " and (date($table_field_name) between '" . $data['sdate'] . "' and '" . $data['edate'] . "')";
         } else {
-            if (isset($data['sdate']) && is_value($data['sdate'])) {
+            if (isset($data['sdate']) && str($data['sdate'])) {
                 $sql .= " and date($table_field_name) >= '" . $data['sdate'] . "'";
             }
 
-            if (isset($data['edate']) && is_value($data['edate'])) {
+            if (isset($data['edate']) && str($data['edate'])) {
                 $sql .= " and date($table_field_name) <= '" . $data['edate'] . "'";
             }
         }
@@ -2273,14 +2274,14 @@ trait query
             $data = $this->_post;
         }
 
-        if (isset($data['stime']) && isset($data['etime']) && is_value($data['stime']) && is_value($data['etime'])) {
+        if (isset($data['stime']) && isset($data['etime']) && str($data['stime']) && str($data['etime'])) {
             $sql .= " and ( time($table_field_name) between '" . $data['stime'] . "' and '" . $data['etime'] . "' )";
         } else {
-            if (isset($data['stime']) && is_value($data['stime'])) {
+            if (isset($data['stime']) && str($data['stime'])) {
                 $sql .= " and time($table_field_name) >= '" . $data['stime'] . "'";
             }
 
-            if (isset($data['etime']) && is_value($data['stime'])) {
+            if (isset($data['etime']) && str($data['stime'])) {
                 $sql .= " and time($table_field_name) <= '" . $data['etime'] . "'";
             }
         }
@@ -2298,11 +2299,11 @@ trait query
      */
     public function sql_search_from_to_date($table_field_name_from, $table_field_name_to, &$data)
     {
-        if (isset($data['sdate']) && is_value($data['sdate'])) {
+        if (isset($data['sdate']) && str($data['sdate'])) {
             $data['sdate'] = auto_date($data['sdate'], "Y-m-d");
         }
 
-        if (isset($data['edate']) && is_value($data['edate'])) {
+        if (isset($data['edate']) && str($data['edate'])) {
             $data['edate'] = auto_date($data['edate'], "Y-m-d");
         }
 
@@ -2323,14 +2324,14 @@ trait query
             $data = $this->_post;
         }
 
-        if (isset($data['sdate']) && isset($data['edate']) && is_value($data['sdate']) && is_value($data['edate'])) {
+        if (isset($data['sdate']) && isset($data['edate']) && str($data['sdate']) && str($data['edate'])) {
             $sql .= " and (date($table_field_name_from) >= '" . $data['sdate'] . "' and date($table_field_name_to) <= '" . $data['edate'] . "')";
         } else {
-            if (isset($data['sdate']) && is_value($data['sdate'])) {
+            if (isset($data['sdate']) && str($data['sdate'])) {
                 $sql .= " and date($table_field_name_from) >= '" . $data['sdate'] . "'";
             }
 
-            if (isset($data['edate']) && is_value($data['edate'])) {
+            if (isset($data['edate']) && str($data['edate'])) {
                 $sql .= " and date($table_field_name_to) <= '" . $data['edate'] . "'";
             }
         }
@@ -2365,14 +2366,14 @@ trait query
             $data = $this->_post;
         }
 
-        if (isset($data['stime']) && isset($data['etime']) && is_value($data['stime']) && is_value($data['etime'])) {
+        if (isset($data['stime']) && isset($data['etime']) && str($data['stime']) && str($data['etime'])) {
             $sql .= " and ( time($table_field_name_from) >= '" . $data['stime'] . "' and time($table_field_name_to) <= '" . $data['etime'] . "' )";
         } else {
-            if (isset($data['stime']) && is_value($data['stime'])) {
+            if (isset($data['stime']) && str($data['stime'])) {
                 $sql .= " and time($table_field_name_from) >= '" . $data['stime'] . "'";
             }
 
-            if (isset($data['etime']) && is_value($data['stime'])) {
+            if (isset($data['etime']) && str($data['stime'])) {
                 $sql .= " and time($table_field_name_to) <= '" . $data['etime'] . "'";
             }
         }
@@ -2389,11 +2390,11 @@ trait query
      */
     public function sql_search_create_date_time(&$data, $table_name_or_alias_name = null)
     {
-        if (isset($data['sdate']) && is_value($data['sdate'])) {
+        if (isset($data['sdate']) && str($data['sdate'])) {
             $data['sdate'] = auto_date($data['sdate'], "Y-m-d");
         }
 
-        if (isset($data['edate']) && is_value($data['edate'])) {
+        if (isset($data['edate']) && str($data['edate'])) {
             $data['edate'] = auto_date($data['edate'], "Y-m-d");
         }
 
@@ -2433,26 +2434,26 @@ trait query
             $data = $this->_post;
         }
 
-        if (isset($data['sdate']) && isset($data['edate']) && is_value($data['sdate']) && is_value($data['edate'])) {
+        if (isset($data['sdate']) && isset($data['edate']) && str($data['sdate']) && str($data['edate'])) {
             $sql .= " and date(${prefix}crdt) between '" . $data['sdate'] . "' and '" . $data['edate'] . "'";
         } else {
-            if (isset($data['sdate']) && is_value($data['sdate'])) {
+            if (isset($data['sdate']) && str($data['sdate'])) {
                 $sql .= " and date(${prefix}crdt) >= '" . $data['sdate'] . "'";
             }
 
-            if (isset($data['edate']) && is_value($data['edate'])) {
+            if (isset($data['edate']) && str($data['edate'])) {
                 $sql .= " and date(${prefix}crdt) <= '" . $data['edate'] . "'";
             }
         }
 
-        if (isset($data['stime']) && isset($data['etime']) && is_value($data['stime']) && is_value($data['etime'])) {
+        if (isset($data['stime']) && isset($data['etime']) && str($data['stime']) && str($data['etime'])) {
             $sql .= " and time(${prefix}crdt) between '" . $data['stime'] . "' and '" . $data['etime'] . "'";
         } else {
-            if (isset($data['stime']) && is_value($data['stime'])) {
+            if (isset($data['stime']) && str($data['stime'])) {
                 $sql .= " and time(${prefix}crdt) >= '" . $data['stime'] . "'";
             }
 
-            if (isset($data['etime']) && is_value($data['stime'])) {
+            if (isset($data['etime']) && str($data['stime'])) {
                 $sql .= " and time(${prefix}crdt) <= '" . $data['etime'] . "'";
             }
         }
@@ -2490,15 +2491,15 @@ trait query
         }
 
         if (isset($data['sdate']) || isset($data['edate'])) {
-            if (isset($data['sdate']) && is_value($data['sdate'])) {
+            if (isset($data['sdate']) && str($data['sdate'])) {
                 $data['sdate'] = auto_date($this->_request[$data['sdate']], "Y-m-d");
             }
 
-            if (isset($data['edate']) && is_value($data['edate'])) {
+            if (isset($data['edate']) && str($data['edate'])) {
                 $data['edate'] = auto_date($this->_request[$data['edate']], "Y-m-d");
             }
 
-            if (isset($data['sdate']) && is_value($data['sdate'])) {
+            if (isset($data['sdate']) && str($data['sdate'])) {
                 $validate = $this->validate("date", [
                     $data['sdate'] => $data['sdate'],
                 ]);
@@ -2508,7 +2509,7 @@ trait query
                 }
             }
 
-            if (isset($data['edate']) && is_value($data['edate'])) {
+            if (isset($data['edate']) && str($data['edate'])) {
                 $validate = $this->validate("date", [
                     $data['edate'] => $data['edate'],
                 ]);
@@ -2520,25 +2521,25 @@ trait query
 
             unset($validate);
 
-            if (isset($data['sdate']) && isset($data['edate']) && is_value($data['sdate']) && is_value($data['edate'])) {
+            if (isset($data['sdate']) && isset($data['edate']) && str($data['sdate']) && str($data['edate'])) {
                 $sql .= " and date(${prefix}crdt) between '" . $data['sdate'] . "' and '" . $data['edate'] . "'";
             } else {
-                if (isset($data['sdate']) && is_value($data['sdate'])) {
+                if (isset($data['sdate']) && str($data['sdate'])) {
                     $sql .= " and date(${prefix}crdt) >= '" . $data['sdate'] . "'";
                 }
 
-                if (isset($data['edate']) && is_value($data['edate'])) {
+                if (isset($data['edate']) && str($data['edate'])) {
                     $sql .= " and date(${prefix}crdt) <= '" . $data['edate'] . "'";
                 }
             }
         }
 
         if (isset($data['stime']) || isset($data['etime'])) {
-            if (isset($data['stime']) && is_value($data['stime'])) {
+            if (isset($data['stime']) && str($data['stime'])) {
                 $data['stime'] = $this->_request[$data['stime']];
             }
 
-            if (isset($data['etime']) && is_value($data['etime'])) {
+            if (isset($data['etime']) && str($data['etime'])) {
                 $data['etime'] = $this->_request[$data['etime']];
             }
 
@@ -2553,26 +2554,26 @@ trait query
 
             unset($validate);
 
-            // if (isset($this->_request[$data['stime']]) && isset($this->_request[$data['etime']]) && is_value($this->_request[$data['stime']]) && is_value($this->_request[$data['etime']])) {
+            // if (isset($this->_request[$data['stime']]) && isset($this->_request[$data['etime']]) && str($this->_request[$data['stime']]) && str($this->_request[$data['etime']])) {
             //     $sql .= " and time(${prefix}crdt) between '" . $this->_request[$data['stime']] . "' and '" . $this->_request[$data['etime']] . "'";
             // } else {
-            //     if (isset($this->_request[$data['stime']]) && is_value($this->_request[$data['stime']])) {
+            //     if (isset($this->_request[$data['stime']]) && str($this->_request[$data['stime']])) {
             //         $sql .= " and time(${prefix}crdt) >= '" . $this->_request[$data['stime']] . "'";
             //     }
 
-            //     if (isset($this->_request[$data['etime']]) && is_value($this->_request[$data['stime']])) {
+            //     if (isset($this->_request[$data['etime']]) && str($this->_request[$data['stime']])) {
             //         $sql .= " and time(${prefix}crdt) <= '" . $this->_request[$data['etime']] . "'";
             //     }
             // }
 
-            if (isset($data['stime']) && isset($data['etime']) && is_value($data['stime']) && is_value($data['etime'])) {
+            if (isset($data['stime']) && isset($data['etime']) && str($data['stime']) && str($data['etime'])) {
                 $sql .= " and time(${prefix}crdt) between '" . $data['stime'] . "' and '" . $data['etime'] . "'";
             } else {
-                if (isset($data['stime']) && is_value($data['stime'])) {
+                if (isset($data['stime']) && str($data['stime'])) {
                     $sql .= " and time(${prefix}crdt) >= '" . $data['stime'] . "'";
                 }
 
-                if (isset($data['etime']) && is_value($data['stime'])) {
+                if (isset($data['etime']) && str($data['stime'])) {
                     $sql .= " and time(${prefix}crdt) <= '" . $data['etime'] . "'";
                 }
             }
@@ -2681,7 +2682,7 @@ trait query
      */
     public function union($table_name = null)
     {
-        if (is_value($table_name)) {
+        if (str($table_name)) {
             $name = $table_name;
         } else {
             $name = $this->_table;
@@ -2755,31 +2756,31 @@ trait query
     public function where($sql_where, $value = null)
     {
         // $this->_where = $sql_where;
-        $is_value = false;
+        $str = false;
 
-        if (is_value($this->_where)) {
+        if (str($this->_where)) {
             $this->_where .= " ";
-            $is_value = true;
+            $str = true;
         }
 
         if (is_array($sql_where) && count($sql_where) > 0) {
             if (is_assoc_array($sql_where) && is_null($value)) {
                 foreach ($sql_where as $k => $v) {
-                    if (!is_array($v) && is_value($v)) {
+                    if (!is_array($v) && str($v)) {
                         $v             = trim($v);
                         $sql_where[$k] = "$k = " . trim(preg_replace("/^(and)/si", "", (is_numeric($v) ? $v : "'$v'")));
                     }
                 }
             } else {
                 foreach ($sql_where as $k => $v) {
-                    if (!is_array($value) && is_value($value)) {
-                        if (!is_value($v)) {
+                    if (!is_array($value) && str($value)) {
+                        if (!str($v)) {
                             unset($sql_where[$k]);
                         } else {
                             $sql_where[$k] = "$v = " . (is_numeric($value) ? $value : "'$value'");
                         }
                     } else {
-                        if (!is_value($v)) {
+                        if (!str($v)) {
                             unset($sql_where[$k]);
                         } else {
                             $sql_where[$k] = trim(preg_replace("/^(and)/si", "", trim($v)));
@@ -2788,9 +2789,9 @@ trait query
                 }
             }
 
-            $this->_where .= ($is_value ? " and " : "") . join(" and ", $sql_where);
+            $this->_where .= ($str ? " and " : "") . join(" and ", $sql_where);
             unset($sql_where);
-        } else if (is_value($sql_where)) {
+        } else if (str($sql_where)) {
             if (is_array($sql_where)) {
                 $sql_where = preg_replace("/^and/si", "", $sql_where);
                 if (is_array($sql_where)) {
@@ -2803,7 +2804,7 @@ trait query
             $sql_where = trim($sql_where);
 
             if (is_array($value) && count($value) > 0) {
-                $this->_where .= ($is_value ? " and " : "") . "$sql_where in (" . join(", ", array_map(
+                $this->_where .= ($str ? " and " : "") . "$sql_where in (" . join(", ", array_map(
                     function ($id) {
                         if (!is_numeric($id)) {
                             if (substr($id, 0, 1) != "'" && substr($id, -1, 1) != "'") {
@@ -2818,16 +2819,16 @@ trait query
                     $value
                 )) . ")";
             } else {
-                if (!is_array($value) && is_value($value)) {
+                if (!is_array($value) && str($value)) {
                     if ($value != "now()" && $value != "current_date" && $value != "current_timestamp" && $value != "year(curdate())" && $value != "month(curdate())" && stripos($value, "(case when") === false && (substr($value, 0, 1) != "(" && substr($value, 1, -1) != ")")) {
-                        $this->_where .= ($is_value ? " and " : "") . "$sql_where = " . (is_numeric($value) ? $value : "'$value'");
+                        $this->_where .= ($str ? " and " : "") . "$sql_where = " . (is_numeric($value) ? $value : "'$value'");
                     } else {
-                        $this->_where .= ($is_value ? " and " : "") . "$sql_where = $value";
+                        $this->_where .= ($str ? " and " : "") . "$sql_where = $value";
                     }
                 } else {
-                    if (!is_value($value)) {
-                        if (is_value($sql_where)) {
-                            $this->_where .= ($is_value ? " and " : "") . $sql_where;
+                    if (!str($value)) {
+                        if (str($sql_where)) {
+                            $this->_where .= ($str ? " and " : "") . $sql_where;
 
                             // if(preg_match("/^\(.*\)$/isU", $sql_where)){
                             if (!preg_match("/^(and|or)\s/isU", $sql_where) && (substr($sql_where, 0, 1) != "(" && substr($sql_where, -1) != ")")) {
@@ -2837,12 +2838,12 @@ trait query
                             }
                         }
                     } else {
-                        $this->_where .= ($is_value ? " and " : "") . $sql_where;
+                        $this->_where .= ($str ? " and " : "") . $sql_where;
                     }
                 }
             }
 
-            unset($is_value);
+            unset($str);
         }
 
         return $this;
@@ -2903,7 +2904,7 @@ trait query
 
         $sql                   = "";
         $mode                  = $this->fetch_mode->mode;
-        $table                 = $this->_table . (is_value($this->_table_alias) ? " as " . $this->_table_alias : "");
+        $table                 = $this->_table . (str($this->_table_alias) ? " as " . $this->_table_alias : "");
         $table_                = array();
         $sql                   = "";
         $sql_                  = array();
@@ -2937,15 +2938,15 @@ trait query
         $table = join(", ", $table_);
         $sql   = join(" and ", $sql_);
 
-        if (is_value($this->_where)) {
-            $sql .= (is_value($sql) ? " and " : "") . $this->_where;
+        if (str($this->_where)) {
+            $sql .= (str($sql) ? " and " : "") . $this->_where;
         }
 
-        if (isset($this->_count_by) && is_value($this->_count_by)) {
+        if (isset($this->_count_by) && str($this->_count_by)) {
             $this->_limit = "";
 
             if ($this->_sql_without_select) {
-                $this->_sql = "from " . $table . (is_value($sql) ? " where $sql" : "") . $this->_group_by . $this->_order_by;
+                $this->_sql = "from " . $table . (str($sql) ? " where $sql" : "") . $this->_group_by . $this->_order_by;
             } else {
                 if ($this->_set_sql_to_sub) {
                     $this->_sql = "select " . $this->_count_by . " as count from ( " . $this->_sql . " ) ";
@@ -2953,12 +2954,12 @@ trait query
                     $this->_sql = "select " . $this->_count_by . " as count from " . $table;
                 }
 
-                $this->_sql .= (is_value($sql) ? " where $sql" : "") . $this->_group_by . $this->_order_by;
+                $this->_sql .= (str($sql) ? " where $sql" : "") . $this->_group_by . $this->_order_by;
             }
 
-        } else if (isset($this->_sum_by) && is_value($this->_sum_by)) {
+        } else if (isset($this->_sum_by) && str($this->_sum_by)) {
             if ($this->_sql_without_select) {
-                $this->_sql = "from " . $table . (is_value($sql) ? " where $sql" : "") . $this->_group_by . $this->_order_by;
+                $this->_sql = "from " . $table . (str($sql) ? " where $sql" : "") . $this->_group_by . $this->_order_by;
             } else {
                 if ($this->_set_sql_to_sub) {
                     $this->_sql = "select " . $this->_sum_by . " from ( " . $this->_sql . " ) ";
@@ -2966,18 +2967,18 @@ trait query
                     $this->_sql = "select " . $this->_sum_by . " from " . $table;
                 }
 
-                $this->_sql .= (is_value($sql) ? " where $sql" : "") . $this->_group_by . $this->_order_by;
+                $this->_sql .= (str($sql) ? " where $sql" : "") . $this->_group_by . $this->_order_by;
             }
         } else {
             if ($this->_sql_without_select) {
-                $this->_sql = "from " . $table . (is_value($sql) ? " where $sql" : "") . $this->_group_by . $this->_order_by . $this->_limit;
+                $this->_sql = "from " . $table . (str($sql) ? " where $sql" : "") . $this->_group_by . $this->_order_by . $this->_limit;
             } else {
-                if (!is_value($select_cols_name)) {
+                if (!str($select_cols_name)) {
                     $select_cols_name = "*";
                 }
 
                 if ($this->_set_sql_to_sub) {
-                    if (is_value($this->_sql)) {
+                    if (str($this->_sql)) {
                         $this->_sql = "select $select_cols_name from ( " . $this->_sql . " ) as t ";
                     } else {
                         $this->_sql = "select $select_cols_name from " . $table;
@@ -2986,7 +2987,8 @@ trait query
                     $this->_sql = "select $select_cols_name from " . $table;
                 }
 
-                $this->_sql .= (is_value($sql) ? " where $sql" : "") . $this->_group_by . $this->_order_by . $this->_limit;
+                $this->_sql .= (str($sql) ? " where $sql" : "") . $this->_group_by . $this->_order_by . $this->_limit;
+                $this->_sql_without_limit = "select '' from " . $table . (str($sql) ? " where $sql" : "") . $this->_group_by;
             }
         }
 
@@ -3009,7 +3011,7 @@ trait query
         $_            = [];
 
         if (is_array($this->_table_join) || is_array($this->_table_joins) || is_array($this->_table_left_joins_table)) {
-            $table_prefix = (is_value($this->_table_alias) ? $this->_table_alias : $this->_table) . ".";
+            $table_prefix = (str($this->_table_alias) ? $this->_table_alias : $this->_table) . ".";
         }
 
         if (!is_null($find_by_column_name)) {
@@ -3017,7 +3019,7 @@ trait query
                 $_ = explode(",", $find_by_column_name);
 
                 if ($select_cols_name == "*") {
-                    if (is_value($table_prefix)) {
+                    if (str($table_prefix)) {
                         foreach ($_ as $k => $v) {
                             $cols[] = $table_prefix . trim($v);
                         }
@@ -3037,7 +3039,7 @@ trait query
                 $_ = explode("or", $find_by_column_name);
 
                 if ($select_cols_name == "*") {
-                    if (is_value($table_prefix)) {
+                    if (str($table_prefix)) {
                         foreach ($_ as $k => $v) {
                             $cols[] = $table_prefix . trim($v);
                         }
@@ -3054,7 +3056,7 @@ trait query
                 $reg = preg_split("/(and|,)/si", $find_by_column_name);
 
                 if ($select_cols_name == "*") {
-                    if (is_value($table_prefix)) {
+                    if (str($table_prefix)) {
                         foreach ($_ as $k => $v) {
                             $cols[] = $table_prefix . trim($v);
                         }
@@ -3070,25 +3072,25 @@ trait query
                 unset($reg);
                 unset($cols);
             } else {
-                if (is_value($find_by_column_name)) {
+                if (str($find_by_column_name)) {
                     $select_cols_name = $find_by_column_name;
                     $mode             = \PDO::FETCH_COLUMN;
                 }
             }
         }
 
-        if (is_value($this->_table_cols)) {
-            $select_cols_name = (is_value($select_cols_name) && $select_cols_name != "*" ? $select_cols_name . ", " : "") . $this->_table_cols;
+        if (str($this->_table_cols)) {
+            $select_cols_name = (str($select_cols_name) && $select_cols_name != "*" ? $select_cols_name . ", " : "") . $this->_table_cols;
         }
 
         unset($table);
         unset($sql);
 
-        if (isset($this->_count_by) && is_value($this->_count_by)) {
+        if (isset($this->_count_by) && str($this->_count_by)) {
             $select_cols_name = " " . $this->_count_by . " as count ";
         }
 
-        if (isset($this->_max_by) && is_value($this->_max_by)) {
+        if (isset($this->_max_by) && str($this->_max_by)) {
             $select_cols_name = " " . $this->_max_by . " as max ";
         }
 

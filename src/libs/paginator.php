@@ -2,7 +2,7 @@
 /*
  * @creator           : Gordon Lim <honwei189@gmail.com>
  * @created           :
- * @last modified     : 20/08/2020 20:38:34
+ * @last modified     : 21/08/2020 20:47:20
  * @last modified by  : Gordon Lim <honwei189@gmail.com>
  */
 
@@ -52,7 +52,7 @@ trait paginator
      */
     public function pagination($nums_data = null, $is_URL_auto_rewrite = true)
     {
-        $col       = "";
+        // $col       = "";
         $total     = 0;
         $nums_data = 0;
 
@@ -64,22 +64,20 @@ trait paginator
         //     unset($rows_resources);
         // }
 
-        if (is_value($this->_table_cols)) {
-            list($col) = explode(",", $this->_table_cols);
-        } else {
-            $col = "*";
-        }
+        // if (is_value($this->_table_cols)) {
+        //     list($col) = explode(",", $this->_table_cols);
+        // } else {
+        //     $col = "*";
+        // }
 
         if (is_null($nums_data)) {
             // $sql = "select count($col) from " . $this->_table . (is_value($this->_where) ? " where " . $this->_where : "");
-            $sql            = $this->_sql;
-            $re             = ["/ORDER BY.*?(?=\\)|$)/mi", '/.*(\limit\s+.*)/is'];
-            $sql            = preg_replace($re, "", $sql);
-            $sql            = "select count(*), t.* from ( $sql ) as t";
-            $rows_resources = $this->instance->query($sql);
-            $total          = $rows_resources->fetch(\PDO::FETCH_COLUMN, \PDO::FETCH_ORI_NEXT, 0);
-            unset($re);
-            unset($rows_resources);
+            $sql = $this->_sql_without_limit;
+            // $re             = ["/ORDER BY.*?(?=\\)|$)/mi", '/.*(\limit\s+.*)/is'];
+            // $sql            = preg_replace($re, "", $sql);
+            $sql   = "select count(*), t.* from ( $sql ) as t";
+            $total = $this->instance->query($sql)->fetchColumn();
+            // unset($re);
         }
 
         $limit = explode(", ", trim(str_replace("limit", "", $this->_limit)));
