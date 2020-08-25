@@ -2,7 +2,7 @@
 /*
  * @creator           : Gordon Lim <honwei189@gmail.com>
  * @created           : 12/05/2019 17:43:32
- * @last modified     : 21/08/2020 20:45:18
+ * @last modified     : 25/08/2020 20:36:07
  * @last modified by  : Gordon Lim <honwei189@gmail.com>
  */
 
@@ -1520,6 +1520,13 @@ trait query
                 $rs = null;
 
                 try {
+                    if ($this->_logger) {
+                        if (stripos($sql, "SELECT LAST_INSERT_ID") !== true) {
+                            $this->write_audit_log(null, "Q", null, $sql);
+                            $this->_logger = false;
+                        }
+                    }
+
                     $rs                  = $this->instance->prepare($sql);
                     $this->affected_Rows = $rs->execute();
 
@@ -1772,6 +1779,13 @@ trait query
             $this->action_type = "Q";
 
             try {
+                if ($this->_logger) {
+                    if (stripos($sql, "SELECT LAST_INSERT_ID") !== true) {
+                        $this->write_audit_log(null, "Q", null, $sql);
+                        $this->_logger = false;
+                    }
+                }
+
                 // if ($audit) {
                 //     $this->to_audit("select", $sql);
                 // }

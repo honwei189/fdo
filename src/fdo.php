@@ -2,7 +2,7 @@
 /*
  * @creator           : Gordon Lim <honwei189@gmail.com>
  * @created           : 06/05/2019 21:54:01
- * @last modified     : 20/08/2020 16:05:40
+ * @last modified     : 25/08/2020 20:36:18
  * @last modified by  : Gordon Lim <honwei189@gmail.com>
  */
 
@@ -890,6 +890,18 @@ class fdo
     }
 
     /**
+     * Enable logger for find(), get() to trace current SELECT SQL
+     * 
+     * @param bool $bool 
+     * @return fdo 
+     */
+    public function log($bool = true)
+    {
+        $this->_logger = $bool;
+        return $this;
+    }
+
+    /**
      * Turn-off debug print beautifier output
      *
      * @param boolean $bool
@@ -1248,10 +1260,11 @@ class fdo
         return $this;
     }
 
-    public function version(){
+    public function version()
+    {
         $version = \honwei189\data::get("DB_VERSION");
 
-        if (!str($version)){
+        if (!str($version)) {
             $version = $this->instance->query('select version()')->fetchColumn();
 
             preg_match("/^[0-9\.]+/", $version, $match);
@@ -1461,7 +1474,7 @@ class fdo
 
     public function write_exceptional($sql, $error, $error_trace)
     {
-        $this->http = ( \honwei189\flayer::exists("\\honwei189\\http") ? \honwei189\flayer::get("\\honwei189\\http") : \honwei189\flayer::bind("\\honwei189\\http") );
+        $this->http = (\honwei189\flayer::exists("\\honwei189\\http") ? \honwei189\flayer::get("\\honwei189\\http") : \honwei189\flayer::bind("\\honwei189\\http"));
 
         $begin = false;
         if ($this->instance->inTransaction()) {
@@ -1534,7 +1547,6 @@ class fdo
         $stmt = $this->instance->prepare($schema);
         $stmt->closeCursor();
         $stmt->execute();
-
 
         // '" . trim(addslashes($this->debug_print_backtrace())) . "',
 
