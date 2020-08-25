@@ -2,7 +2,7 @@
 /*
  * @creator           : Gordon Lim <honwei189@gmail.com>
  * @created           : 12/05/2019 17:43:32
- * @last modified     : 18/08/2020 19:37:05
+ * @last modified     : 25/08/2020 20:27:30
  * @last modified by  : Gordon Lim <honwei189@gmail.com>
  */
 
@@ -17,8 +17,8 @@ namespace honwei189\fdo;
  * @subpackage
  * @author      Gordon Lim <honwei189@gmail.com>
  * @link        https://github.com/honwei189/fdo/
- * @version     "1.0.0" 
- * @since       "1.0.0" 
+ * @version     "1.0.0"
+ * @since       "1.0.0"
  */
 trait operate
 {
@@ -235,8 +235,8 @@ trait operate
                 } else {
                     $sql_where = $this->_where;
                 }
-            }else{
-                if ((int)$sql_where > 0){
+            } else {
+                if ((int) $sql_where > 0) {
                     $this->by_id($sql_where);
                     $sql_where = $this->_where;
                 }
@@ -356,8 +356,8 @@ trait operate
 
                 // $sql = "SET @uuid := 0; update $this->_table set " . join(", ", $this->_vars) . ", id = (SELECT @uuid := id) where " . $sql_where;
 
-                $sql = "update $this->_table set " . join(", ", $this->_vars) . ", id = (SELECT @uuid := id) where " . $sql_where;
-
+                // $sql = "update $this->_table set " . join(", ", $this->_vars) . ", id = (SELECT @uuid := id) where " . $sql_where;
+                $sql = "update $this->_table set " . join(", ", $this->_vars) . ", id = LAST_INSERT_ID(id) where " . $sql_where;
             }
 
             if ($this->_passthrough) {
@@ -430,14 +430,15 @@ trait operate
                         }
                     }
 
-                    
-                    $this->execute("SET @uuid := 0;");
+                    // $this->execute("SET @uuid := 0;");
                     $this->execute($sql);
 
                     if ($new_data) {
                         $this->_id = $this->last_id();
                     } else {
-                        $this->_id = (int) $this->read_one_sql("SELECT @uuid;", \PDO::FETCH_COLUMN, 0);
+                        // $this->_id = (int) $this->read_one_sql("SELECT @uuid;", \PDO::FETCH_COLUMN, 0);
+                        $this->_id = (int) $this->read_one_sql("SELECT LAST_INSERT_ID();", \PDO::FETCH_COLUMN, 0);
+
                     }
 
                     $stat = !$this->is_error;
@@ -471,7 +472,8 @@ trait operate
                         if ($new_data) {
                             $this->write_audit_log((isset($this->_raws['id']) ? (is_array($this->_raws['id']) ? (int) $this->_raws['id'][0] : (int) $this->_raws['id']) : (int) $this->_id), "C", null, $this->_raws);
                         } else {
-                            $this->write_audit_log(($this->_id > 0 ? $this->_id : "@uuid"), "U", $this->_raws, $raws);
+                            // $this->write_audit_log(($this->_id > 0 ? $this->_id : "@uuid"), "U", $this->_raws, $raws);
+                            $this->write_audit_log(($this->_id > 0 ? $this->_id : "LAST_INSERT_ID()"), "U", $this->_raws, $raws);
 
                         }
                     }
@@ -696,8 +698,8 @@ trait operate
                 } else {
                     $sql_where = $this->_where;
                 }
-            }else{
-                if ((int)$sql_where > 0){
+            } else {
+                if ((int) $sql_where > 0) {
                     $this->by_id($sql_where);
                     $sql_where = $this->_where;
                 }
@@ -762,7 +764,8 @@ trait operate
             if ($this->_id > 0) {
                 $sql = "update $this->_table set " . join(", ", $this->_vars) . " where " . $sql_where;
             } else {
-                $sql = "SET @uuid := 0; update $this->_table set " . join(", ", $this->_vars) . ", id = (SELECT @uuid := id) where " . $sql_where;
+                // $sql = "SET @uuid := 0; update $this->_table set " . join(", ", $this->_vars) . ", id = (SELECT @uuid := id) where " . $sql_where;
+                $sql = "update $this->_table set " . join(", ", $this->_vars) . ", id = LAST_INSERT_ID(id) where " . $sql_where;
             }
 
             if ($this->_passthrough) {
@@ -821,7 +824,8 @@ trait operate
                     }
 
                     if (!$this->_trx && !$this->_soft_update) {
-                        $this->write_audit_log(($this->_id > 0 ? $this->_id : "@uuid"), "U", $this->_raws, $raws);
+                        // $this->write_audit_log(($this->_id > 0 ? $this->_id : "@uuid"), "U", $this->_raws, $raws);
+                        $this->write_audit_log(($this->_id > 0 ? $this->_id : "LAST_INSERT_ID()"), "U", $this->_raws, $raws);
                     }
                 }
             }
