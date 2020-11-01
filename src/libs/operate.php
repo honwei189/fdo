@@ -1,9 +1,17 @@
 <?php
 /*
- * @creator           : Gordon Lim <honwei189@gmail.com>
- * @created           : 12/05/2019 17:43:32
- * @last modified     : 25/08/2020 20:27:30
- * @last modified by  : Gordon Lim <honwei189@gmail.com>
+ * Created       : 2019-05-12 05:43:32 pm
+ * Author        : Gordon Lim <honwei189@gmail.com>
+ * Last Modified : 2020-11-01 01:56:21 pm
+ * Modified By   : Gordon Lim
+ * ---------
+ * Changelog
+ * 
+ * Date & time           By                    Version   Comments
+ * -------------------   -------------------   -------   ---------------------------------------------------------
+ * 2020-11-01 01:49 pm   Gordon Lim            1.0.2     Added new feature -- get SQL.  Allows to get SQL instead of send SQL to database
+ * 2020-08-25 08:27 pm   Gordon Lim            1.0.1     Rectified incompatitable function in mySQL 8 problem
+ * 
  */
 
 namespace honwei189\fdo;
@@ -17,8 +25,8 @@ namespace honwei189\fdo;
  * @subpackage
  * @author      Gordon Lim <honwei189@gmail.com>
  * @link        https://github.com/honwei189/fdo/
- * @version     "1.0.0"
- * @since       "1.0.0"
+ * @version     "1.0.2" Added new feature -- get SQL.  Allows to get SQL instead of send SQL to database
+ * @since       "1.0.1" Rectified incompatitable function in mySQL 8 problem
  */
 trait operate
 {
@@ -81,6 +89,10 @@ trait operate
         $stat = false;
 
         $sql = "delete from $this->_table where " . $sql_where;
+
+        if ($this->_get_sql) {
+            return $sql;
+        }
 
         if ($this->_debug_print) {
             $this->print_sql_format($sql);
@@ -299,7 +311,11 @@ trait operate
                             $this->_vars[$k] = "$v";
                         }
                     } else {
-                        $this->_vars[$k] = "null";
+                        if (is_numeric($v) || is_bool($v)) {
+                            $this->_vars[$k] = $v;
+                        } else {
+                            $this->_vars[$k] = "null";
+                        }
                     }
                 }
 
@@ -350,7 +366,11 @@ trait operate
                             $this->_vars[$k] = "$k = $v";
                         }
                     } else {
-                        $this->_vars[$k] = "$k = null";
+                        if (is_numeric($v) || is_bool($v)) {
+                            $this->_vars[$k] = "$k = $v";
+                        } else {
+                            $this->_vars[$k] = "$k = null";
+                        }
                     }
                 }
 
@@ -358,6 +378,10 @@ trait operate
 
                 // $sql = "update $this->_table set " . join(", ", $this->_vars) . ", id = (SELECT @uuid := id) where " . $sql_where;
                 $sql = "update $this->_table set " . join(", ", $this->_vars) . ", id = LAST_INSERT_ID(id) where " . $sql_where;
+            }
+
+            if ($this->_get_sql) {
+                return $sql;
             }
 
             if ($this->_passthrough) {
@@ -554,7 +578,11 @@ trait operate
                         $this->_vars[$k] = "$v";
                     }
                 } else {
-                    $this->_vars[$k] = "null";
+                    if (is_numeric($v) || is_bool($v)) {
+                        $this->_vars[$k] = $v;
+                    } else {
+                        $this->_vars[$k] = "null";
+                    }
                 }
             }
 
@@ -563,6 +591,10 @@ trait operate
             }
 
             $sql = "insert into " . $this->_table . " (" . join(", ", $keys) . ") values (" . join(", ", $this->_vars) . ");";
+
+            if ($this->_get_sql) {
+                return $sql;
+            }
 
             if ($this->_passthrough) {
                 $stat = 1;
@@ -757,7 +789,11 @@ trait operate
                         $this->_vars[$k] = "$k = $v";
                     }
                 } else {
-                    $this->_vars[$k] = "$k = null";
+                    if (is_numeric($v) || is_bool($v)) {
+                        $this->_vars[$k] = "$k = $v";
+                    } else {
+                        $this->_vars[$k] = "$k = null";
+                    }
                 }
             }
 
@@ -766,6 +802,10 @@ trait operate
             } else {
                 // $sql = "SET @uuid := 0; update $this->_table set " . join(", ", $this->_vars) . ", id = (SELECT @uuid := id) where " . $sql_where;
                 $sql = "update $this->_table set " . join(", ", $this->_vars) . ", id = LAST_INSERT_ID(id) where " . $sql_where;
+            }
+
+            if ($this->_get_sql) {
+                return $sql;
             }
 
             if ($this->_passthrough) {

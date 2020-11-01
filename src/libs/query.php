@@ -1,9 +1,18 @@
 <?php
 /*
- * @creator           : Gordon Lim <honwei189@gmail.com>
- * @created           : 12/05/2019 17:43:32
- * @last modified     : 25/08/2020 20:36:07
- * @last modified by  : Gordon Lim <honwei189@gmail.com>
+ * Created       : 2020-06-05 09:58:19 pm
+ * Author        : Gordon Lim <honwei189@gmail.com>
+ * Last Modified : 2020-11-01 01:50:33 pm
+ * Modified By   : Gordon Lim
+ * ---------
+ * Changelog
+ * 
+ * Date & time           By                    Version   Comments
+ * -------------------   -------------------   -------   ---------------------------------------------------------
+ * 2020-11-01 01:42 pm   Gordon Lim            1.0.7     Added new feature - return SQL instead of send SQL to database
+ * 2020-08-25 08:36 pm   Gordon Lim            1.0.6     Remove "SQL_CALC_FOUND_ROWS" because of it become deprecated function in 
+ *                                                       mySQL 8 and will be removed in the future
+ * 
  */
 
 namespace honwei189\fdo;
@@ -19,8 +28,8 @@ use honwei189\flayer as flayer;
  * @subpackage
  * @author      Gordon Lim <honwei189@gmail.com>
  * @link        https://github.com/honwei189/fdo/
- * @version     "1.0.6" Remove "SQL_CALC_FOUND_ROWS" because of it become deprecated function in mySQL 8 and will be removed in the future
- * @since       "1.0.6"
+ * @version     "1.0.7" Added new feature - return SQL instead of send SQL to database
+ * @since       "1.0.6" Remove "SQL_CALC_FOUND_ROWS" because of it become deprecated function in mySQL 8 and will be removed in the future
  */
 trait query
 {
@@ -375,6 +384,10 @@ trait query
             $this->_table_alias_temp = null;
         }
 
+        if ($this->_get_sql) {
+            return $stm;
+        }
+
         if ($this->_debug_print) {
             $this->print_sql_format($stm);
 
@@ -480,6 +493,10 @@ trait query
             $this->_table_alias_temp = null;
         }
 
+        if ($this->_get_sql) {
+            return $stm;
+        }
+
         if ($this->_debug_print) {
             $this->print_sql_format($stm);
             if (!$this->_soft_update) {
@@ -582,6 +599,10 @@ trait query
             $this->_table_alias_temp = null;
         }
 
+        if ($this->_get_sql) {
+            return $sql;
+        }
+
         if ($debug) {
             $this->print_sql_format($sql);
             if (!$this->_soft_update) {
@@ -659,6 +680,10 @@ trait query
             $this->_table_alias_temp = null;
         }
 
+        if ($this->_get_sql) {
+            return $sql;
+        }
+
         if ($this->_debug_print) {
             $this->print_sql_format($sql);
             if (!$this->_soft_update) {
@@ -733,6 +758,10 @@ trait query
                 $this->_table_alias_temp = null;
             }
 
+            if ($this->_get_sql) {
+                return $sql;
+            }
+
             if ($this->_debug_print) {
                 $this->print_sql_format($sql);
                 if (!$this->_soft_update) {
@@ -801,6 +830,10 @@ trait query
                 $mode = \PDO::FETCH_INTO;
             }
 
+            if ($this->_get_sql) {
+                return $sql;
+            }
+
             if ($this->_debug_print) {
                 $this->print_sql_format($sql);
                 if (!$this->_soft_update) {
@@ -815,6 +848,11 @@ trait query
             }
 
             $sql = "select $table_cols from $table where $query_by = $id";
+
+            if ($this->_get_sql) {
+                return $sql;
+            }
+
             return $this->read_all_sql($sql, false, $mode, $column_num);
         }
     }

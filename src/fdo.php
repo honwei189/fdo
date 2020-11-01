@@ -1,9 +1,16 @@
 <?php
 /*
- * @creator           : Gordon Lim <honwei189@gmail.com>
- * @created           : 06/05/2019 21:54:01
- * @last modified     : 25/08/2020 20:36:18
- * @last modified by  : Gordon Lim <honwei189@gmail.com>
+ * Created       : 2019-05-06 09:54:01 pm
+ * Author        : Gordon Lim <honwei189@gmail.com>
+ * Last Modified : 2020-11-01 01:51:01 pm
+ * Modified By   : Gordon Lim
+ * ---------
+ * Changelog
+ * 
+ * Date & time           By                    Version   Comments
+ * -------------------   -------------------   -------   ---------------------------------------------------------
+ * 2020-11-01 01:45 pm   Gordon Lim            1.0.1     Added new function -- get_sql().  This is to get SQL instead of send SQL to database
+ * 
  */
 
 namespace honwei189\fdo;
@@ -17,7 +24,7 @@ namespace honwei189\fdo;
  * @subpackage
  * @author      Gordon Lim <honwei189@gmail.com>
  * @link        https://github.com/honwei189/fdo/
- * @version     "1.0.0"
+ * @version     "1.0.1" Add new function -- get_sql().  This is to get SQL instead of send SQL to database
  * @since       "1.0.0"
  */
 class fdo
@@ -37,6 +44,7 @@ class fdo
     private $_debug_print      = false;
     private $_driver_options   = [];
     private $_enable_logger    = true;
+    private $_get_sql          = false;
     private $_off_print_format = false;
     private $_is_api           = false;
     private $_is_cli           = false;
@@ -830,6 +838,20 @@ class fdo
     }
 
     /**
+     * Get SQL instead of send query to database
+     *
+     *
+     * @param boolean $bool
+     * @return FDO
+     */
+    public function get_sql($bool = true)
+    {
+        $this->_get_sql = $bool;
+
+        return $this;
+    }
+
+    /**
      * Is DB connected?
      *
      * @return boolean
@@ -891,9 +913,9 @@ class fdo
 
     /**
      * Enable logger for find(), get() to trace current SELECT SQL
-     * 
-     * @param bool $bool 
-     * @return fdo 
+     *
+     * @param bool $bool
+     * @return fdo
      */
     public function log($bool = true)
     {
