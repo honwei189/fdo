@@ -2211,6 +2211,10 @@ trait query
 
             if (str($first_field)) {
                 $sql = "select row_number() over(order by $first_field desc) as no, t.* from ( $sql ) as t";
+
+                // list(, $first_field) = explode(".", $first_field);
+
+                // $sql = "select ROW_NUMBER() OVER w AS 'no', original_sql.* from ( $sql ) original_sql WINDOW w AS (ORDER BY $first_field)";
             }
 
             unset($first_field);
