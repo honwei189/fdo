@@ -6,11 +6,11 @@
  * Modified By   : Gordon Lim
  * ---------
  * Changelog
- * 
+ *
  * Date & time           By                    Version   Comments
  * -------------------   -------------------   -------   ---------------------------------------------------------
  * 2020-11-01 01:45 pm   Gordon Lim            1.0.1     Added new function -- get_sql().  This is to get SQL instead of send SQL to database
- * 
+ *
  */
 
 namespace honwei189\fdo;
@@ -44,6 +44,7 @@ class fdo
     private $_debug_print      = false;
     private $_driver_options   = [];
     private $_enable_logger    = true;
+    private $_query_log        = false;
     private $_get_sql          = false;
     private $_off_print_format = false;
     private $_is_api           = false;
@@ -498,6 +499,8 @@ class fdo
                 ];
 
                 $this->debug($this->env("APP_DEBUG"));
+                $this->enable_crud_log((bool) $this->env("DB_LOGGER_CRUD"));
+                $this->enable_query_log((bool) $this->env("DB_LOGGER_QUERY"));
             }
         }
 
@@ -768,6 +771,28 @@ class fdo
                 }
             }
         }
+    }
+
+    /**
+     * Enable Create/Update/Delete audit log, write transaction into table
+     *
+     * @param bool $enable
+     */
+    public function enable_crud_log($enable = true)
+    {
+        $this->_enable_logger = $enable;
+    }
+
+    /**
+     * Enable SELECT statement query, write transaction into table
+     *
+     * @param bool $enable
+     */
+    public function enable_query_log($bool = true)
+    {
+        $this->_query_log = $bool;
+
+        return $this;
     }
 
     public function env($key, $default = null)
@@ -1306,6 +1331,14 @@ class fdo
 
             // $schema = "set autocommit=0; CREATE TABLE if not exists `logs_" . $this->_table . "` (
 
+            if (is_null($raws)) {
+                if (is_null($this->http)) {
+                    $this->http = (\honwei189\flayer::exists("\\honwei189\\http") ? \honwei189\flayer::get("\\honwei189\\http") : \honwei189\flayer::bind("\\honwei189\\http"));
+                }
+
+                $raws = ($this->http->type == "json" ? json_decode($this->http->_raws, true) : (is_array($_REQUEST) ? $_REQUEST : ""));
+            }
+
             if ($this->_multi_log_table) {
                 $schema = "CREATE TABLE if not exists `logs_" . $this->_table . "` (";
             } else {
@@ -1496,7 +1529,9 @@ class fdo
 
     public function write_exceptional($sql, $error, $error_trace)
     {
-        $this->http = (\honwei189\flayer::exists("\\honwei189\\http") ? \honwei189\flayer::get("\\honwei189\\http") : \honwei189\flayer::bind("\\honwei189\\http"));
+        if (is_null($this->http)) {
+            $this->http = (\honwei189\flayer::exists("\\honwei189\\http") ? \honwei189\flayer::get("\\honwei189\\http") : \honwei189\flayer::bind("\\honwei189\\http"));
+        }
 
         $begin = false;
         if ($this->instance->inTransaction()) {

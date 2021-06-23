@@ -6,13 +6,13 @@
  * Modified By   : Gordon Lim
  * ---------
  * Changelog
- * 
+ *
  * Date & time           By                    Version   Comments
  * -------------------   -------------------   -------   ---------------------------------------------------------
  * 2020-11-01 01:42 pm   Gordon Lim            1.0.7     Added new feature - return SQL instead of send SQL to database
- * 2020-08-25 08:36 pm   Gordon Lim            1.0.6     Remove "SQL_CALC_FOUND_ROWS" because of it become deprecated function in 
+ * 2020-08-25 08:36 pm   Gordon Lim            1.0.6     Remove "SQL_CALC_FOUND_ROWS" because of it become deprecated function in
  *                                                       mySQL 8 and will be removed in the future
- * 
+ *
  */
 
 namespace honwei189\fdo;
@@ -401,6 +401,10 @@ trait query
             } else {
                 // $stm = $this->_sql;
 
+                if ($this->_query_log) {
+                    $this->write_audit_log(null, "Q", null, $this->_sql);
+                }
+
                 if ($fetch_count) {
                     return $this->read_one_sql($this->_sql, false, \PDO::FETCH_COLUMN)[0];
                 } else {
@@ -507,6 +511,10 @@ trait query
                 $this->_sql_only = false;
                 return $stm;
             } else {
+                if ($this->_query_log) {
+                    $this->write_audit_log(null, "Q", null, $stm);
+                }
+
                 if ($fetch_count) {
                     return $this->_receive_raws($this->read_one_sql($stm, \PDO::FETCH_COLUMN)[0]);
                 } else {
@@ -614,6 +622,10 @@ trait query
                 $this->print_sql_format($sql);
             }
 
+            if ($this->_query_log) {
+                $this->write_audit_log(null, "Q", null, $sql);
+            }
+
             if ($fetch_count) {
                 return $this->_receive_raws($this->read_one_sql($sql, false, \PDO::FETCH_COLUMN)[0]);
             } else {
@@ -690,6 +702,10 @@ trait query
                 exit;
             }
         } else {
+            if ($this->_query_log) {
+                $this->write_audit_log(null, "Q", null, $sql);
+            }
+
             if ($fetch_count) {
                 return $this->_receive_raws($this->read_one_sql($sql, false, \PDO::FETCH_COLUMN)[0]);
             } else {
@@ -768,6 +784,10 @@ trait query
                     exit;
                 }
             } else {
+                if ($this->_query_log) {
+                    $this->write_audit_log(null, "Q", null, $sql);
+                }
+
                 if ($count) {
                     return $this->read_one_sql($sql, false, \PDO::FETCH_COLUMN, 0);
                 } else {
@@ -781,6 +801,11 @@ trait query
             }
 
             $sql = "select $table_cols from $table where $query_by = $id'";
+
+            if ($this->_query_log) {
+                $this->write_audit_log(null, "Q", null, $sql);
+            }
+
             return $this->read_one_sql($sql, false);
         }
     }
@@ -840,6 +865,10 @@ trait query
                     exit;
                 }
             } else {
+                if ($this->_query_log) {
+                    $this->write_audit_log(null, "Q", null, $sql);
+                }
+
                 return $this->read_all_sql($sql, false, $mode, $column_num);
             }
         } else {
@@ -851,6 +880,10 @@ trait query
 
             if ($this->_get_sql) {
                 return $sql;
+            }
+
+            if ($this->_query_log) {
+                $this->write_audit_log(null, "Q", null, $sql);
             }
 
             return $this->read_all_sql($sql, false, $mode, $column_num);
