@@ -43,8 +43,8 @@ class fdo
     private $_count_by         = "";
     private $_debug_print      = false;
     private $_driver_options   = [];
-    private $_enable_logger    = true;
-    private $_query_log        = false;
+    private $_enable_logger    = null;
+    private $_query_log        = null;
     private $_get_sql          = false;
     private $_off_print_format = false;
     private $_is_api           = false;
@@ -911,6 +911,34 @@ class fdo
     }
 
     /**
+     * Check is enabled logger for CRUD
+     *
+     * @return bool
+     */
+    public function is_enabled_crud_log()
+    {
+        if (!is_null($this->_enable_logger)) {
+            return (bool) $this->_enable_logger;
+        }
+
+        return (bool) $this->env("DB_LOGGER_CRUD");
+    }
+
+    /**
+     * Check is enabled logger for query statement
+     *
+     * @return bool
+     */
+    public function is_enabled_query_log()
+    {
+        if (!is_null($this->_query_log)) {
+            return (bool) $this->_query_log;
+        }
+
+        return (bool) $this->env("DB_LOGGER_QUERY");
+    }
+
+    /**
      * @param boolean $bool
      */
     public function is_set_encrypt_id()
@@ -1326,37 +1354,36 @@ class fdo
 
     public function write_audit_log($id, $action, $raws, $inputs)
     {
-        if ($this->_enable_logger) {
-            // $id = (int)$id;
+        // $id = (int)$id;
 
-            // $schema = "set autocommit=0; CREATE TABLE if not exists `logs_" . $this->_table . "` (
+        // $schema = "set autocommit=0; CREATE TABLE if not exists `logs_" . $this->_table . "` (
 
-            if (is_null($raws)) {
-                if (is_null($this->http)) {
-                    $this->http = (\honwei189\flayer::exists("\\honwei189\\http") ? \honwei189\flayer::get("\\honwei189\\http") : \honwei189\flayer::bind("\\honwei189\\http"));
-                }
-
-                $raws = ($this->http->type == "json" ? json_decode($this->http->_raws, true) : (is_array($_REQUEST) ? $_REQUEST : ""));
+        if (is_null($raws)) {
+            if (is_null($this->http)) {
+                $this->http = (\honwei189\flayer::exists("\\honwei189\\http") ? \honwei189\flayer::get("\\honwei189\\http") : \honwei189\flayer::bind("\\honwei189\\http"));
             }
 
-            if ($this->_multi_log_table) {
-                $schema = "CREATE TABLE if not exists `logs_" . $this->_table . "` (";
-            } else {
-                $schema = "CREATE TABLE if not exists `logs` (";
-            }
+            $raws = ($this->http->type == "json" ? json_decode($this->http->_raws, true) : (is_array($_REQUEST) ? $_REQUEST : ""));
+        }
 
-            $schema .= "
+        if ($this->_multi_log_table) {
+            $schema = "CREATE TABLE if not exists `logs_" . $this->_table . "` (";
+        } else {
+            $schema = "CREATE TABLE if not exists `logs` (";
+        }
+
+        $schema .= "
                 `id` INT(18) NOT NULL AUTO_INCREMENT,
                 `client_id` INT(18),
                 `action` VARCHAR(3),
                 `action_dscpt` VARCHAR(300),";
 
-            if (!$this->_multi_log_table) {
-                $schema .= "
-                `tbl` VARCHAR(150),";
-            }
-
+        if (!$this->_multi_log_table) {
             $schema .= "
+                `tbl` VARCHAR(150),";
+        }
+
+        $schema .= "
                 `ref_id` INT(18),
                 `rel_id` INT(18),
                 `inputs` TEXT,
@@ -1372,61 +1399,61 @@ class fdo
             COLLATE='utf8_general_ci'
             ENGINE=MyISAM;";
 
-            // unset($raws['status']);
-            // unset($raws['crdate']);
-            // unset($raws['cdt']);
-            // unset($raws['crby']);
-            // unset($raws['lupdate']);
-            // unset($raws['ldt']);
-            // unset($raws['lupby']);
+        // unset($raws['status']);
+        // unset($raws['crdate']);
+        // unset($raws['cdt']);
+        // unset($raws['crby']);
+        // unset($raws['lupdate']);
+        // unset($raws['ldt']);
+        // unset($raws['lupby']);
 
-            if (is_array($inputs)) {
-                foreach ($inputs as $k => $v) {
-                    switch ($v) {
-                        case "now()":
-                        case "current_timestamp":
-                            $inputs[$k] = date("Y-m-d H:i:s");
-                            break;
+        if (is_array($inputs)) {
+            foreach ($inputs as $k => $v) {
+                switch ($v) {
+                    case "now()":
+                    case "current_timestamp":
+                        $inputs[$k] = date("Y-m-d H:i:s");
+                        break;
 
-                        case "current_date":
-                            $inputs[$k] = date("Y-m-d");
-                            break;
-                    }
+                    case "current_date":
+                        $inputs[$k] = date("Y-m-d");
+                        break;
                 }
             }
+        }
 
-            // $sql = "$schema replace into logs_" . $this->_table . " select null, null, '$action', $id, null, null, '" . json_encode($inputs) . "', '" . (is_array($raws) ? json_encode($raws) : "") . "', '" . Common::getIP() . "', 0, now(), " . (isset($this->userid) ? $this->userid : "'system'") . ";";
-            // $sql = "insert into logs_" . $this->_table . " values (null, null, '$action', $id, null, null, '" . addslashes(json_encode($inputs)) . "', '" . (is_array($raws) ? addslashes(json_encode($raws)) : "") . "', '" . Common::getIP() . "', 0, now(), " . (isset($this->userid) ? $this->userid : "'system'") . ");";
+        // $sql = "$schema replace into logs_" . $this->_table . " select null, null, '$action', $id, null, null, '" . json_encode($inputs) . "', '" . (is_array($raws) ? json_encode($raws) : "") . "', '" . Common::getIP() . "', 0, now(), " . (isset($this->userid) ? $this->userid : "'system'") . ";";
+        // $sql = "insert into logs_" . $this->_table . " values (null, null, '$action', $id, null, null, '" . addslashes(json_encode($inputs)) . "', '" . (is_array($raws) ? addslashes(json_encode($raws)) : "") . "', '" . Common::getIP() . "', 0, now(), " . (isset($this->userid) ? $this->userid : "'system'") . ");";
 
-            // $find = $this->data("SHOW TABLES LIKE 'logs_" . $this->_table . "'");
+        // $find = $this->data("SHOW TABLES LIKE 'logs_" . $this->_table . "'");
 
-            // if(is_array($find) && count($find) == 0){
-            //     $this->_db->Execute($schema);
-            //     if ($this->_trx) {
-            //         if (!$this->_db->Is_Success()) {
-            // $this->_db->Rollback();
-            //             return false;
-            //         }
-            //     }
-            // }
+        // if(is_array($find) && count($find) == 0){
+        //     $this->_db->Execute($schema);
+        //     if ($this->_trx) {
+        //         if (!$this->_db->Is_Success()) {
+        // $this->_db->Rollback();
+        //             return false;
+        //         }
+        //     }
+        // }
 
-            $this->action_type = (is_value($this->action_type) ? $this->action_type : $action);
+        $this->action_type = (is_value($this->action_type) ? $this->action_type : $action);
 
-            if ($this->_trx) {
-                // $sql = "insert into logs_" . $this->_table . " values (null, null, '$action', $id, null, null, '" . json_encode($inputs) . "', '" . (is_array($raws) ? json_encode($raws) : "") . "', '" . Common::getIP() . "', 0, now(), " . (isset($this->_user) ? "'" . $this->_user . "'" : "'system'") . ");";
+        if ($this->_trx) {
+            // $sql = "insert into logs_" . $this->_table . " values (null, null, '$action', $id, null, null, '" . json_encode($inputs) . "', '" . (is_array($raws) ? json_encode($raws) : "") . "', '" . Common::getIP() . "', 0, now(), " . (isset($this->_user) ? "'" . $this->_user . "'" : "'system'") . ");";
 
-                $sql = "insert into " . ((!$this->_multi_log_table) ? "logs" : "logs_" . $this->_table) . " values (
+            $sql = "insert into " . ((!$this->_multi_log_table) ? "logs" : "logs_" . $this->_table) . " values (
                     null,
                     " . (isset($this->_user_company_id) && (double) $this->_user_company_id > 0 ? (double) $this->_user_company_id : "null") . ",
                     '" . $this->action_type . "',
                     " . (is_value($this->action_dscpt) ? "'" . $this->action_dscpt . "'" : "null") . " ,";
 
-                if (!$this->_multi_log_table) {
-                    $sql .= "
-                    '$this->_table',";
-                }
-
+            if (!$this->_multi_log_table) {
                 $sql .= "
+                    '$this->_table',";
+            }
+
+            $sql .= "
                     $id,
                     null,
                     '" . (json_encode($inputs)) . "',
@@ -1436,39 +1463,39 @@ class fdo
                     0,
                     now(),
                     " . (isset($this->_user) ? "'" . $this->_user . "'" : "'system'") .
-                    ");";
+                ");";
 
-                // $this->print($sql);
-                // exit;
+            // $this->print($sql);
+            // exit;
 
-                $this->execute($sql);
+            $this->execute($sql);
 
-                //if ($this->_trx) {
-                if ($this->is_error) {
-                    // $this->_db->Rollback();
-                    return false;
-                }
-                //}
-            } else {
-                // If not on transaction mode, auto create log table
-                // $sql = "$schema replace into logs_" . $this->_table . " select null, null, '$action', $id, null, null, '" . json_encode($inputs) . "', '" . (is_array($raws) ? json_encode($raws) : "") . "', '" . Common::getIP() . "', 0, now(), " . (isset($this->_user) ? "'" . $this->_user . "'" : "'system'") . ";";
-                $stmt = $this->instance->prepare($schema);
-                $stmt->closeCursor();
-                $stmt->execute();
+            //if ($this->_trx) {
+            if ($this->is_error) {
+                // $this->_db->Rollback();
+                return false;
+            }
+            //}
+        } else {
+            // If not on transaction mode, auto create log table
+            // $sql = "$schema replace into logs_" . $this->_table . " select null, null, '$action', $id, null, null, '" . json_encode($inputs) . "', '" . (is_array($raws) ? json_encode($raws) : "") . "', '" . Common::getIP() . "', 0, now(), " . (isset($this->_user) ? "'" . $this->_user . "'" : "'system'") . ";";
+            $stmt = $this->instance->prepare($schema);
+            $stmt->closeCursor();
+            $stmt->execute();
 
-                $sql = "replace into " . ((!$this->_multi_log_table) ? "logs" : "logs_" . $this->_table) . "
+            $sql = "replace into " . ((!$this->_multi_log_table) ? "logs" : "logs_" . $this->_table) . "
                 select
                     null,
                     null,
                     '" . $this->action_type . "',
                     " . (is_value($this->action_dscpt) ? "'" . $this->action_dscpt . "'" : "null") . " ,";
 
-                if (!$this->_multi_log_table) {
-                    $sql .= "
-                    '$this->_table',";
-                }
-
+            if (!$this->_multi_log_table) {
                 $sql .= "
+                    '$this->_table',";
+            }
+
+            $sql .= "
                     $id,
                     null,
                     '" . (json_encode($inputs)) . "',
@@ -1478,53 +1505,52 @@ class fdo
                     0,
                     now(),
                     " . (isset($this->_user) ? "'" . $this->_user . "'" : "'system'") .
-                    ";";
+                ";";
 
-                $stmt = $this->instance->prepare($sql);
+            $stmt = $this->instance->prepare($sql);
 
-                try {
-                    $stmt->closeCursor();
-                    $stmt->execute();
-                } catch (\PDOException $e) {
-                    ob_start();
-                    print_r($e->errorInfo);
-                    $except = new \Exception;
-                    print_r($except->getTraceAsString());
-                    $error = ob_get_contents();
-                    ob_end_clean();
-
-                    $this->write_exceptional($sql, $e->getMessage(), $error);
-                    unset($error);
-                    unset($except);
-
-                    // pre($stmt->errorInfo());
-                    return false;
-                }
-
+            try {
                 $stmt->closeCursor();
+                $stmt->execute();
+            } catch (\PDOException $e) {
+                ob_start();
+                print_r($e->errorInfo);
+                $except = new \Exception;
+                print_r($except->getTraceAsString());
+                $error = ob_get_contents();
+                ob_end_clean();
+
+                $this->write_exceptional($sql, $e->getMessage(), $error);
+                unset($error);
+                unset($except);
+
+                // pre($stmt->errorInfo());
+                return false;
             }
 
-            $this->action_type  = null;
-            $this->action_dscpt = null;
-
-            unset($inputs);
-            unset($schema);
-            unset($stmt);
-            unset($sql);
-
-            // $sql = "insert into logs_" . $this->_table . " values (null, null, '$action', $id, null, null, '" . json_encode($inputs) . "', '" . (is_array($raws) ? json_encode($raws) : "") . "', '" . Common::getIP() . "', 0, now(), " . (isset($this->userid) ? $this->userid : "'system'") . ");";
-
-            // // echo $sql;
-            // // exit;
-
-            // $this->_db->Execute($sql);
-            // if ($this->_trx) {
-            //     if (!$this->_db->Is_Success()) {
-            // $this->_db->Rollback();
-            //         return false;
-            //     }
-            // }
+            $stmt->closeCursor();
         }
+
+        $this->action_type  = null;
+        $this->action_dscpt = null;
+
+        unset($inputs);
+        unset($schema);
+        unset($stmt);
+        unset($sql);
+
+        // $sql = "insert into logs_" . $this->_table . " values (null, null, '$action', $id, null, null, '" . json_encode($inputs) . "', '" . (is_array($raws) ? json_encode($raws) : "") . "', '" . Common::getIP() . "', 0, now(), " . (isset($this->userid) ? $this->userid : "'system'") . ");";
+
+        // // echo $sql;
+        // // exit;
+
+        // $this->_db->Execute($sql);
+        // if ($this->_trx) {
+        //     if (!$this->_db->Is_Success()) {
+        // $this->_db->Rollback();
+        //         return false;
+        //     }
+        // }
     }
 
     public function write_exceptional($sql, $error, $error_trace)

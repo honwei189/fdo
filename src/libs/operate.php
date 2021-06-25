@@ -6,12 +6,12 @@
  * Modified By   : Gordon Lim
  * ---------
  * Changelog
- * 
+ *
  * Date & time           By                    Version   Comments
  * -------------------   -------------------   -------   ---------------------------------------------------------
  * 2020-11-01 01:49 pm   Gordon Lim            1.0.2     Added new feature -- get SQL.  Allows to get SQL instead of send SQL to database
  * 2020-08-25 08:27 pm   Gordon Lim            1.0.1     Rectified incompatitable function in mySQL 8 problem
- * 
+ *
  */
 
 namespace honwei189\fdo;
@@ -110,7 +110,7 @@ trait operate
             $this->delete_sql($sql);
             $stat = !$this->is_error;
 
-            if (!$this->_soft_update) {
+            if ($this->is_enabled_crud_log() && !$this->_soft_update) {
                 if (isset($this->_raws) && is_array($this->_raws) && count($this->_raws) > 0) {
                     foreach ($this->_raws as $k => $v) {
                         $this->write_audit_log((isset($v['id']) ? (int) $v['id'] : (int) $this->_id), "D", $v, $sql_where);
@@ -492,7 +492,7 @@ trait operate
                         unset($_);
                     }
 
-                    if (!$this->_soft_update) {
+                    if ($this->is_enabled_crud_log() && !$this->_soft_update) {
                         if ($new_data) {
                             $this->write_audit_log((isset($this->_raws['id']) ? (is_array($this->_raws['id']) ? (int) $this->_raws['id'][0] : (int) $this->_raws['id']) : (int) $this->_id), "C", null, $this->_raws);
                         } else {
@@ -671,7 +671,7 @@ trait operate
                         unset($_);
                     }
 
-                    if (!$this->_soft_update) {
+                    if ($this->is_enabled_crud_log() && !$this->_soft_update) {
                         $this->write_audit_log((isset($this->_raws['id']) ? (is_array($this->_raws['id']) ? (int) $this->_raws['id'][0] : (int) $this->_raws['id']) : (int) $this->_id), "C", null, $this->_raws);
                     }
                 }
@@ -863,7 +863,7 @@ trait operate
                         unset($_);
                     }
 
-                    if (!$this->_trx && !$this->_soft_update) {
+                    if ($this->is_enabled_crud_log() && !$this->_trx && !$this->_soft_update) {
                         // $this->write_audit_log(($this->_id > 0 ? $this->_id : "@uuid"), "U", $this->_raws, $raws);
                         $this->write_audit_log(($this->_id > 0 ? $this->_id : "LAST_INSERT_ID()"), "U", $this->_raws, $raws);
                     }

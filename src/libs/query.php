@@ -401,7 +401,7 @@ trait query
             } else {
                 // $stm = $this->_sql;
 
-                if ($this->_query_log) {
+                if ($this->is_enabled_query_log()) {
                     $this->write_audit_log(null, "Q", null, $this->_sql);
                 }
 
@@ -511,7 +511,7 @@ trait query
                 $this->_sql_only = false;
                 return $stm;
             } else {
-                if ($this->_query_log) {
+                if ($this->is_enabled_query_log()) {
                     $this->write_audit_log(null, "Q", null, $stm);
                 }
 
@@ -622,7 +622,7 @@ trait query
                 $this->print_sql_format($sql);
             }
 
-            if ($this->_query_log) {
+            if ($this->is_enabled_query_log()) {
                 $this->write_audit_log(null, "Q", null, $sql);
             }
 
@@ -702,7 +702,7 @@ trait query
                 exit;
             }
         } else {
-            if ($this->_query_log) {
+            if ($this->is_enabled_query_log()) {
                 $this->write_audit_log(null, "Q", null, $sql);
             }
 
@@ -784,9 +784,9 @@ trait query
                     exit;
                 }
             } else {
-                if ($this->_query_log) {
-                    $this->write_audit_log(null, "Q", null, $sql);
-                }
+                // if ($this->is_enabled_query_log()) {
+                //     $this->write_audit_log(null, "Q", null, $sql);
+                // }
 
                 if ($count) {
                     return $this->read_one_sql($sql, false, \PDO::FETCH_COLUMN, 0);
@@ -802,9 +802,9 @@ trait query
 
             $sql = "select $table_cols from $table where $query_by = $id'";
 
-            if ($this->_query_log) {
-                $this->write_audit_log(null, "Q", null, $sql);
-            }
+            // if ($this->is_enabled_query_log()) {
+            //     $this->write_audit_log(null, "Q", null, $sql);
+            // }
 
             return $this->read_one_sql($sql, false);
         }
@@ -865,7 +865,7 @@ trait query
                     exit;
                 }
             } else {
-                if ($this->_query_log) {
+                if ($this->is_enabled_query_log()) {
                     $this->write_audit_log(null, "Q", null, $sql);
                 }
 
@@ -882,7 +882,7 @@ trait query
                 return $sql;
             }
 
-            if ($this->_query_log) {
+            if ($this->is_enabled_query_log()) {
                 $this->write_audit_log(null, "Q", null, $sql);
             }
 
