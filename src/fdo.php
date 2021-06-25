@@ -1456,7 +1456,7 @@ class fdo
             $sql .= "
                     $id,
                     null,
-                    '" . (json_encode($inputs)) . "',
+                    '" . addslashes(json_encode($inputs)) . "',
                     '" . (is_array($_REQUEST) ? (json_encode($_REQUEST)) : "") . "',
                     '" . (is_array($raws) ? (json_encode($raws)) : "") . "',
                     '" . $this->getIP() . "',
@@ -1498,7 +1498,7 @@ class fdo
             $sql .= "
                     $id,
                     null,
-                    '" . (json_encode($inputs)) . "',
+                    '" . addslashes(json_encode($inputs)) . "',
                     '" . (is_array($_REQUEST) ? (json_encode($_REQUEST)) : "") . "',
                     '" . (is_array($raws) ? (json_encode($raws)) : "") . "',
                     '" . $this->getIP() . "',
