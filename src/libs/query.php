@@ -831,8 +831,6 @@ trait query
         if (str($this->_where)) {
             list($sql, $mode)              = $this->gen_select_sql($table, $id, $table_cols);
             $this->_where                  = "";
-            $this->_order_by               = "";
-            $this->_group_by               = "";
             $this->_limit                  = "";
             $this->_max_by                 = "";
             $this->_sql                    = "";
@@ -843,6 +841,11 @@ trait query
             $this->_table_joins_table      = null;
             $this->_table_left_joins       = null;
             $this->_table_left_joins_table = null;
+
+            if (!$this->_sql_display_num) {
+                $this->_order_by = "";
+                $this->_group_by = "";
+            }
 
             if (str($this->_table_alias_temp)) {
                 $this->_table_alias      = $this->_table_alias_temp;
@@ -2190,11 +2193,17 @@ trait query
                 $field = preg_split('|,|', $reg[1], -1, PREG_SPLIT_NO_EMPTY);
 
                 if (isa($field)) {
-                    foreach ($field as $k => $v) {
-                        if (!preg_match("|\s*as\s*|", $v)) {
-                            $first_field = trim($v);
-                            break;
-                        }
+                    // foreach ($field as $k => $v) {
+                    //     if (!preg_match("|\s*as\s*|", $v)) {
+                    //         $first_field = trim($v);
+                    //         break;
+                    //     }
+                    // }
+
+                    if (preg_match("|\s*as\s*|", $field[0])) {
+                        $first_field = end(preg_split("|\s*as\s*|", $field[0]));
+                    } else {
+                        $first_field = $field[0];
                     }
                 }
             }
@@ -2243,11 +2252,34 @@ trait query
             // }
 
             if (str($first_field)) {
-                $sql = "select row_number() over(order by $first_field desc) as no, t.* from ( $sql ) as t";
+                if (stripos($first_field, ".") !== false) {
+                    list(, $first_field) = explode(".", $first_field);
+                }
+
+                $num = 0;
+                if (is_value($this->_limit)) {
+                    if (stripos($this->_limit, ",") !== false) {
+                        list($num) = explode(",", $this->_limit);
+                        $num       = (int) trim(str_ireplace("limit", "", $num));
+                    }
+                }
+
+                // $sql = "select row_number() over(order by $first_field desc) as no, t.* from ( $sql ) as t";
 
                 // list(, $first_field) = explode(".", $first_field);
 
                 // $sql = "select ROW_NUMBER() OVER w AS 'no', original_sql.* from ( $sql ) original_sql WINDOW w AS (ORDER BY $first_field)";
+
+                $sql = "select ( $num + ROW_NUMBER() OVER w ) AS 'no', original_sql.* from ( $sql ) original_sql";
+
+                if (is_value($this->_order_by)) {
+                    $sql .= " WINDOW w AS (" . $this->_order_by . ")";
+                } else {
+                    $sql .= " WINDOW w AS (ORDER BY $first_field)";
+                }
+
+                $this->_order_by = "";
+                $this->_limit    = "";
             }
 
             unset($first_field);
