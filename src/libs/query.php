@@ -264,6 +264,68 @@ trait query
     }
 
     /**
+     * Bulk apply SQL criteria -- where()
+     *
+     * example:
+     *
+     * $this->criterias($_POST);
+     *
+     * or;
+     *
+     * $this->criterias([
+     *     "status"          => "C",
+     *     "nums_data"       => $_SESSION['Preferences']['Data_Row'] ?? 200,
+     *     "start_from_nums" => 1,
+     *     "order_by"        => "created_at asc",
+     *     "order_by"        => ["created_at", "asc"],
+     *     "debug"           => true
+     * ]);
+     *
+     * @param array $array
+     * @return mixed
+     */
+    public function criterias($array)
+    {
+        if (is_array($array) && count($array) > 0) {
+            foreach ($array as $k => $v) {
+                if (!in_array($k, ["debug", "nums_data", "start_from_nums", "order_by", "group_by"])) {
+                    if (is_int($k)) {
+                        $this->where($v);
+                    } else {
+                        $this->where($k, $v);
+                    }
+                } else {
+                    switch ($k) {
+                        case "debug":
+                            $this->debug((bool) $v);
+                            break;
+
+                        case "order_by":
+                            if (is_array($v) && count($v) > 0) {
+                                $this->order_by($v[0], $v[1]);
+                            } elseif (is_string($v)) {
+                                $this->order_by($v);
+                            }
+                            break;
+                    }
+                }
+            }
+
+            if ($array["nums_data"] ?? false && $array["start_from_nums"] ?? false) {
+                $this->limit($array["nums_data"], $array["start_from_nums"]);
+            } else {
+                if ($array["nums_data"] ?? false) {
+                    $this->limit($array["nums_data"]);
+                }
+
+                if ($array["start_from_nums"] ?? false) {
+                    $this->limit($array["start_from_nums"]);
+                }
+            }
+        }
+    }
+
+    /**
      * Check the record exist.  If exist return TRUE, otherwise FALSE
      *
      * @return boolean
@@ -2888,8 +2950,13 @@ trait query
             if (is_assoc_array($sql_where) && is_null($value)) {
                 foreach ($sql_where as $k => $v) {
                     if (!is_array($v) && str($v)) {
-                        $v             = trim($v);
-                        $sql_where[$k] = "$k = " . trim(preg_replace("/^(and)/si", "", (is_numeric($v) ? $v : "'$v'")));
+                        $v = trim($v);
+
+                        if (is_int($k)) {
+                            $v = trim($v);
+                        } else {
+                            $sql_where[$k] = "$k = " . trim(preg_replace("/^(and)/si", "", (is_numeric($v) ? $v : "'$v'")));
+                        }
                     }
                 }
             } else {
