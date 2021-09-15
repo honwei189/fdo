@@ -1,0 +1,111 @@
+<?php
+return [
+    'mysql'    => [
+        'driver'   => 'mysql',
+        'host'     => 'localhost',
+        'port'     => '3306',
+        'database' => 'laravel_ofisuite',
+        'username' => 'root',
+        'password' => '',
+        'charset'  => 'utf8',
+        'encoding' => 'utf8_general_ci',
+        'prefix'   => '',
+        'strict'   => true,
+        'engine'   => null,
+        'debug'    => false,
+        'logger'   => false,
+    ],
+    'mysql_rw' => [
+        'read'  => [
+            'driver'   => 'mysql',
+            'host'     => 'localhost',
+            'port'     => '3306',
+            'database' => 'laravel_ofisuite',
+            'username' => 'root',
+            'password' => '',
+            'charset'  => 'utf8',
+            'encoding' => 'utf8_general_ci',
+            'prefix'   => '',
+            'strict'   => true,
+            'engine'   => null,
+            'debug'    => false,
+            'logger'   => false,
+        ],
+
+        'write' => [
+            'driver'   => 'mysql',
+            'host'     => 'localhost',
+            'port'     => '3306',
+            'database' => 'laravel_ofisuite',
+            'username' => 'root',
+            'password' => '',
+            'charset'  => 'utf8',
+            'encoding' => 'utf8_general_ci',
+            'prefix'   => '',
+            'strict'   => true,
+            'engine'   => null,
+            'debug'    => false,
+            'logger'   => false,
+        ],
+    ],
+
+    'mysql2'   => [
+        'driver'   => 'mysql',
+        'host'     => 'localhost',
+        'port'     => '3306',
+        'database' => 'mysql',
+        'username' => 'root',
+        'password' => '',
+        'charset'  => 'utf8',
+        'encoding' => 'utf8_general_ci',
+        'prefix'   => '',
+        'strict'   => true,
+        'engine'   => null,
+        'debug'    => false,
+        'logger'   => false,
+    ],
+
+    'pgsql'    => [
+        'driver'   => 'pgsql',
+        'host'     => '127.0.0.1',
+        'port'     => '5432',
+        'database' => 'forge',
+        'username' => 'forge',
+        'password' => '',
+        'charset'  => 'utf8',
+        'prefix'   => '',
+        'schema'   => 'public',
+        'sslmode'  => 'prefer',
+        'debug'    => false,
+        'logger'   => false,
+    ],
+
+    'sqlsrv'   => [
+        'driver'   => 'sqlsrv',
+        'host'     => 'localhost',
+        'port'     => '1433',
+        'database' => 'forge',
+        'username' => 'forge',
+        'password' => '',
+        'charset'  => 'utf8',
+        'prefix'   => '',
+        'debug'    => false,
+        'logger'   => false,
+    ],
+
+    'redis'    => [
+
+        'client'  => 'predis',
+
+        'default' => [
+            'host'     => '127.0.0.1',
+            'password' => null,
+            'port'     => 6379,
+            'database' => 0,
+        ],
+        'debug'   => false,
+        'logger'  => false,
+
+    ],
+
+];

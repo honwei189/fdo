@@ -1,0 +1,49 @@
+{
+    "name": "honwei189/fdo",
+    "description": "Fast DB ORM (with or without) library for PHP",
+    "authors": [{
+        "name": "Gordon Lim",
+        "email": "honwei189@gmail.com"
+    }],
+    "type": "library",
+    "minimum-stability": "dev",
+    "require": {
+        "composer/installers": "2.x-dev",
+        "honwei189/flayer": "^1.0",
+        "php": ">=7.3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "honwei189\\FDO\\": [
+                "src/"
+            ],
+            "honwei189\\FDO\\Factory\\": [
+                "src/Factory/"
+            ]
+        },
+        "classmap": [
+            "src/helpers/"
+        ],
+        "files": [
+            "src/FDO.php"
+        ]
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0-dev"
+        },
+        "laravel": {
+            "providers": [
+                "honwei189\\FDO\\FDOServiceProvider"
+            ],
+            "aliases": {
+                "fdo": "honwei189\\FDO\\SQL"
+            }
+        },
+        "installer-paths": {
+            "./vendor/{$vendor}/utils/{$name}": [
+                "honwei189/fdo"
+            ]
+        }
+    }
+}
