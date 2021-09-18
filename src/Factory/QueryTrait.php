@@ -43,6 +43,8 @@ trait QueryTrait
     public $num_rows;
     public $page_id;
 
+    private $derived     = false;
+    private $derived_sql = "";
     private $FDO;
     private $_count_group = false;
     private $_fetch_one   = false;
@@ -133,6 +135,30 @@ trait QueryTrait
         } else {
             $this->where("$column_name='$value'");
         }
+
+        return $this;
+    }
+
+    /**
+     * Create derived table.  It is currently attached to find() only
+     *
+     * Another derived function is $this->sub()
+     *
+     * e.g: $this->derived($this->abc()->where("id", 1)->find(), "t")->order_by("id", "asc")->find();
+     *
+     * @param \honwei189\FDO\SQL $object
+     * @param string $name Optional.  Derived table name
+     * @return \honwei189\FDO\SQL
+     */
+    public function derived(\honwei189\FDO\SQL $object, $name = null)
+    {
+        $this->derived = true;
+
+        if (is_value($name)) {
+            $this->set_table_temp_alias($name);
+        }
+
+        $this->derived_sql = $object->get_sql();
 
         return $this;
     }
@@ -445,6 +471,9 @@ trait QueryTrait
             $this->_table_alias      = $this->_table_alias_temp;
             $this->_table_alias_temp = null;
         }
+
+        $this->derived     = false;
+        $this->derived_sql = "";
 
         if ($this->_get_sql) {
             return $stm;
@@ -2186,7 +2215,9 @@ trait QueryTrait
     }
 
     /**
-     * Set the SQL as parent and child.  e.g output:  select * from ( MY_ORIGINAL_SQL ) as s
+     * Create derived table.  Set the SQL as parent and child.  e.g output:  select * from ( MY_ORIGINAL_SQL ) as s
+     *
+     * Another derived function is $this->derived(), much easier to use
      *
      * Example usage :
      *
@@ -3175,8 +3206,17 @@ trait QueryTrait
                     $this->_sql = "select $select_cols_name from " . $table;
                 }
 
-                $this->_sql .= (str($sql) ? " where $sql" : "") . $this->_group_by . $this->_order_by . $this->_limit;
-                $this->_sql_without_limit = "select '' from " . $table . (str($sql) ? " where $sql" : "") . $this->_group_by;
+                if ($this->derived) {
+                    $this->_sql = "select $select_cols_name from " . (is_value($this->derived_sql) ? "( " . $this->derived_sql . " ) as $table" : "") . (is_value($sql) ? " where $sql" : "") . $this->_group_by . $this->_order_by . $this->_limit;
+
+                    if (str($this->_table_alias)) {
+                        $this->_table_alias      = "";
+                        $this->_table_alias_temp = null;
+                    }
+                } else {
+                    $this->_sql .= (str($sql) ? " where $sql" : "") . $this->_group_by . $this->_order_by . $this->_limit;
+                    $this->_sql_without_limit = "select '' from " . $table . (str($sql) ? " where $sql" : "") . $this->_group_by;
+                }
             }
         }
 
