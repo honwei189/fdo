@@ -8,7 +8,7 @@
 
 namespace honwei189\FDO;
 
-use FDO;
+use honwei189\FDO\SQL;
 
 /**
  * Data Operate static model.  Applicable for Laravel -- model or anyone would like to use static class to execute FDO
@@ -26,6 +26,18 @@ use FDO;
  * class YOUR_CLASS extends fdom {
  *
  * }
+ * 
+ * or;
+ * 
+ * $app->bind("honwei189\\FDO\\FDOM");
+ * $app->FDOM()::connect(config::get("db", "mysql"));
+ * echo $app->FDOM()::user()->debug()->find();
+ * 
+ * or;
+ * 
+ * echo FDOM::version();
+ * FDOM::user()->debug()->find();
+ * 
  *
  * @package     FDO
  * @subpackage
@@ -221,9 +233,9 @@ class FDOM
             $arguments = [$arguments];
         }
 
-        if (!is_value(self::$table)) {
-            self::get_table();
-        }
+        // if (!is_value(self::$table)) {
+        //     self::get_table();
+        // }
 
         return call_user_func_array(array(self::load_instance(), $name), $arguments);
     }
@@ -239,6 +251,7 @@ class FDOM
         if (!is_value(static::$table)) {
             if (!is_value(self::call("get_table"))) {
                 $p = get_called_class();
+
                 if (strpos($p, "\\") !== false) {
                     $_ = explode("\\", $p);
 
@@ -266,7 +279,11 @@ class FDOM
     private static function load_instance($name = null, $arguments = null)
     {
         if (!self::$instance) {
-            self::$instance = app("fdo");
+            if(function_exists("fdo")){
+                self::$instance = app("fdo");
+            }else{
+                self::$instance = new SQL;
+            }
         }
 
         return self::$instance;
