@@ -65,7 +65,7 @@ class SQL
     //     query::__construct as private __queryConstruct;
     // }
 
-    use 
+    use
     Factory\FormTrait,
     Factory\OperateTrait,
     Factory\PaginatorTrait,
@@ -421,7 +421,7 @@ class SQL
      */
     public function action_description($dscpt)
     {
-        $this->action_dscpt = $dscpt;
+        $this->action_description = $dscpt;
 
         return $this;
     }
@@ -1382,7 +1382,7 @@ class SQL
                 `id` INT(18) NOT NULL AUTO_INCREMENT,
                 `client_id` INT(18),
                 `action` VARCHAR(3),
-                `action_dscpt` VARCHAR(300),";
+                `action_description` VARCHAR(300),";
 
         if (!$this->_multi_log_table) {
             $schema .= "
@@ -1452,7 +1452,7 @@ class SQL
                     null,
                     " . (isset($this->_user_company_id) && (double) $this->_user_company_id > 0 ? (double) $this->_user_company_id : "null") . ",
                     '" . $this->action_type . "',
-                    " . (is_value($this->action_dscpt) ? "'" . $this->action_dscpt . "'" : "null") . " ,";
+                    " . (is_value($this->action_description) ? "'" . $this->action_description . "'" : "null") . " ,";
 
             if (!$this->_multi_log_table) {
                 $sql .= "
@@ -1494,7 +1494,7 @@ class SQL
                     null,
                     null,
                     '" . $this->action_type . "',
-                    " . (is_value($this->action_dscpt) ? "'" . $this->action_dscpt . "'" : "null") . " ,";
+                    " . (is_value($this->action_description) ? "'" . $this->action_description . "'" : "null") . " ,";
 
             if (!$this->_multi_log_table) {
                 $sql .= "
@@ -1537,8 +1537,8 @@ class SQL
             $stmt->closeCursor();
         }
 
-        $this->action_type  = null;
-        $this->action_dscpt = null;
+        $this->action_type        = null;
+        $this->action_description = null;
 
         unset($inputs);
         unset($schema);
@@ -1618,7 +1618,6 @@ class SQL
             `crby` varchar(150),
             PRIMARY KEY (`id`)
         )
-        COLLATE='utf8_general_ci'
         ENGINE=MyISAM;
         ";
 
@@ -1643,7 +1642,7 @@ class SQL
             null,
             '" . (isset($_SESSION['APP']) ? $_SESSION['APP'] : "general") . "',
             " . (is_value($this->action_type) ? "'" . $this->action_type . "'" : "null") . " ,
-            " . (is_value($this->action_dscpt) ? "'" . $this->action_dscpt . "'" : "null") . " ,
+            " . (is_value($this->action_description) ? "'" . $this->action_description . "'" : "null") . " ,
             '" . $_SERVER['REQUEST_URI'] . "',
             '" . $this->http->type . "',
             '" . tostring($this->http->header) . "',
@@ -1671,50 +1670,69 @@ class SQL
             $this->begin_trx();
         }
 
-        ob_start();
-        pre($this->debug_print_backtrace());
-        $trace = ob_get_contents();
-        ob_end_clean();
+        $email = \honwei189\Flayer\Config::get("flayer", "email");
 
-        $_inputs = null;
-        if (isset($inputs) && is_array($inputs)) {
-            ob_start();
-            pre($inputs);
-            $_inputs = ob_get_contents();
-            ob_end_clean();
+        if (isset($email) && is_array($email) && count($email) > 0) {
+            if ($email['send_to'] ?? false) {
+                // ob_start();
+                // pre($this->debug_print_backtrace());
+                // $trace = ob_get_contents();
+                // ob_end_clean();
+
+                $_inputs = null;
+                if (isset($inputs) && is_array($inputs)) {
+                    ob_start();
+                    pre($inputs);
+                    $_inputs = ob_get_contents();
+                    ob_end_clean();
+                }
+
+                $_request = null;
+                if (isset($_REQUEST) && is_array($_REQUEST)) {
+                    ob_start();
+                    pre($_REQUEST);
+                    $_request = ob_get_contents();
+                    ob_end_clean();
+                }
+
+                $_session = null;
+                if (isset($_SESSION) && is_array($_SESSION)) {
+                    ob_start();
+                    pre($_SESSION);
+                    $_session = ob_get_contents();
+                    ob_end_clean();
+                }
+
+                $contents = "
+                Date & Time : " . date("Y-m-d H:i:s") . "<br>
+                IP : " . $this->getip() . "<br>
+                Module : " . (isset($_SESSION['APP']) ? $_SESSION['APP'] : "general") . "<br>
+                Action : " . (is_value($this->action_type) ? $this->action_type : "") . "<br>
+                Description : " . (is_value($this->action_description) ? $this->action_description : "") . "<br>
+                Inputs : $_inputs<br>
+                Requests : $_request<br>
+                Session : $_session<br>
+                Error : $error<br>
+                SQL : $sql<br>
+                Trace : <hr>
+                $error_trace
+                ";
+
+                send_mail(($email['sender_name'] ?? getenv("APP_NAME") ?? "") . $email['sender_email'], $email['send_to'], $_SERVER['HTTP_HOST'] . " DB exception", $contents);
+
+                $contents = null;
+                $trace    = null;
+                $_inputs  = null;
+                $_request = null;
+                $_session = null;
+
+            }
         }
 
-        $_request = null;
-        if (isset($_REQUEST) && is_array($_REQUEST)) {
-            ob_start();
-            pre($_REQUEST);
-            $_inputs = ob_get_contents();
-            ob_end_clean();
-        }
-
-        $contents = "
-        Date & Time : " . date("Y-m-d H:i:s") . "<br>
-        IP : " . $this->getip() . "<br>
-        Module : " . (isset($_SESSION['APP']) ? $_SESSION['APP'] : "general") . "<br>
-        Action : " . (is_value($this->action_type) ? $this->action_type : "") . "<br>
-        Description : " . (is_value($this->action_dscpt) ? $this->action_dscpt : "") . "<br>
-        Inputs: $_inputs<br>
-        Requests: $_request<br>
-        Error : $error<br>
-        SQL : $sql<br>
-        Trace : <hr>
-        $error_trace
-        ";
-
-        // send_mail("no-reply@" . $_SERVER['HTTP_HOST'], "gordon@weki.com.my", $_SERVER['HTTP_HOST'] . " DB exception", $contents);
-
-        $contents           = null;
-        $trace              = null;
-        $_inputs            = null;
-        $_request           = null;
-        $this->action_type  = null;
-        $this->action_dscpt = null;
+        $this->action_type        = null;
+        $this->action_description = null;
         unset($begin);
+        unset($email);
         unset($inputs);
         unset($schema);
         unset($sql);
