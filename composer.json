@@ -34,10 +34,12 @@
         },
         "laravel": {
             "providers": [
-                "honwei189\\FDO\\FDOServiceProvider"
+                "honwei189\\FDO\\FDOServiceProvider",
+                "honwei189\\FDO\\FDOMServiceProvider"
             ],
             "aliases": {
-                "fdo": "honwei189\\FDO\\SQL"
+                "fdo": "honwei189\\FDO\\SQL",
+                "fdom": "honwei189\\FDO\\FDOM"
             }
         },
         "installer-paths": {
