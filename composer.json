@@ -14,12 +14,8 @@
     },
     "autoload": {
         "psr-4": {
-            "honwei189\\FDO\\": [
-                "src/"
-            ],
-            "honwei189\\FDO\\Factory\\": [
-                "src/Factory/"
-            ]
+            "honwei189\\FDO\\": "src/",
+            "honwei189\\FDO\\Factory\\": "src/Factory/"
         },
         "classmap": [
             "src/helpers/"
@@ -34,12 +30,10 @@
         },
         "laravel": {
             "providers": [
-                "honwei189\\FDO\\FDOServiceProvider",
-                "honwei189\\FDO\\FDOMServiceProvider"
+                "honwei189\\FDO\\FDOServiceProvider"
             ],
             "aliases": {
-                "fdo": "honwei189\\FDO\\SQL",
-                "fdom": "honwei189\\FDO\\FDOM"
+                "fdo": "honwei189\\FDO\\SQL"
             }
         },
         "installer-paths": {
