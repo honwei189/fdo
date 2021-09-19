@@ -35,7 +35,9 @@ class FDOServiceProvider extends ServiceProvider
         $this->app->booting(function() {
             $loader = AliasLoader::getInstance();
             // $loader->alias('FDO', FDO::class);
-            $loader->alias(FDO::class, 'fdo');
+            $loader->alias(FDO::class, 'fdo'); // FDO has been loaded by Laravel, this method may wrong and may not be needed anymore
+            // $loader->alias(FDOM::class, 'fdom');
+            $loader->alias('fdom', FDOM::class); // Corret method and to register FDOM to boot loader and create alias
         });
 
         // App::bind('FDO', function()
@@ -56,6 +58,7 @@ class FDOServiceProvider extends ServiceProvider
         // });
 
         $this->app->make('honwei189\FDO');
+        $this->app->make('honwei189\FDO\FDOM');
     }
 
     public function provides()
