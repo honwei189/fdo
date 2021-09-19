@@ -7,7 +7,8 @@ config::set_path(__DIR__ . "/../");
 config::load();
 
 // $app = new honwei189\Flayer\Core;
-$app = new honwei189\Flayer;
+// $app = new honwei189\Flayer;
+$app = app("Flayer");
 // $app->FDO()->connect();
 // $app->bind("honwei189\\FDO\\SQL", "FDO");
 $app->bind("honwei189\\FDO");
@@ -15,7 +16,15 @@ $app->bind("honwei189\\FDO");
 // $dbh = honwei189\Flayer\Container::get("FDO")->connect($config['mysql']);
 // $dbh = $app->FDO()->connect( honwei189\config::get("database", "mysql") );
 
-$dbh = $app->FDO()->connect(config::get("database", "mysql"));
+$dbh = $app->FDO()->connect(config::get("db", "mysql"));
+
+$fdo = app("FDO");
+
+print_r($fdo->version());
+
+echo $app::FDO()->version() . PHP_EOL;
+
+echo \honwei189\FDO\FDOM::version() . PHP_EOL;
 
 foreach ($app->FDO()->q('SELECT * from users limit 2') as $row) {
     print_r($row);
