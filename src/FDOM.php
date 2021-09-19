@@ -286,7 +286,7 @@ class FDOM
     {
         if (!self::$instance) {
             if(function_exists("app")){
-                self::$instance = app("fdo");
+                self::$instance = app("FDO");
             }else{
                 self::$instance = new SQL;
             }
