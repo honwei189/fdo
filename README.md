@@ -11,6 +11,13 @@ FDO is a PHP based library to assist user to do DB create/edit/delete/search/fin
   - Allows connect mutiple DB at the same time
   - Easier debug ( just call a build-in method -- debug().  e.g: $this->users()->where("user_id", 1)->debug()->get() )
 
+
+## Note
+
+If you encountered when installing -- "Class 'fdom' not found" (Illuminate\Foundation\AliasLoader::load("honwei189\FDO\FDOM")), please execute following command:
+
+```composer dump && php artisan optimize```
+
 ## Example
 
 ```php
