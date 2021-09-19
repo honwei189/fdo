@@ -8,8 +8,6 @@
 
 namespace honwei189\FDO;
 
-use honwei189\FDO\SQL;
-
 /**
  * Data Operate static model.  Applicable for Laravel -- model or anyone would like to use static class to execute FDO
  *
@@ -52,6 +50,10 @@ class FDOM
     static $rc;
     protected static $table;
     protected static $id;
+
+    public function __construct(){
+        
+    }
 
     public function __call($name, $arguments)
     {
@@ -170,7 +172,7 @@ class FDOM
 
     public static function save()
     {
-        $request = app("request");
+        $request = (object) app("request");
 
         // $flayer = app("flayer");
         // $flayer::bind("\\honwei189\\http");
@@ -248,8 +250,10 @@ class FDOM
     private static function get_table()
     {
         // self::get_var("_table");
-        if (!is_value(static::$table)) {
-            if (!is_value(self::call("get_table"))) {
+        if (!str(static::$table)) {
+            $tbl = self::call("get_table");
+
+            if (!str($tbl)) {
                 $p = get_called_class();
 
                 if (strpos($p, "\\") !== false) {
@@ -262,6 +266,8 @@ class FDOM
 
                 unset($p);
             }
+
+            unset($tbl);
         } else {
             // self::call("debug");
             call_user_func_array(array(self::load_instance(), "set_table"), [static::$table]);
@@ -279,7 +285,7 @@ class FDOM
     private static function load_instance($name = null, $arguments = null)
     {
         if (!self::$instance) {
-            if(function_exists("fdo")){
+            if(function_exists("app")){
                 self::$instance = app("fdo");
             }else{
                 self::$instance = new SQL;
