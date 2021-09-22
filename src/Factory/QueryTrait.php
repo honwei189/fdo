@@ -1405,7 +1405,7 @@ trait QueryTrait
      *
      * @param string|array $column_name
      * @param string $value
-     * @return db_helper
+     * @return FDO
      */
     public function not($column_name, $value)
     {
@@ -2275,113 +2275,196 @@ trait QueryTrait
         return $this;
     }
 
+    // public function set_display_num($sql)
+    // {
+    //     if ($this->version() >= 8) {
+    //         preg_match("|select\s*(.*?)\s*from|isU", $sql, $reg);
+
+    //         $first_field = "";
+
+    //         if (str($reg[1])) {
+    //             $field = preg_split('|,|', $reg[1], -1, PREG_SPLIT_NO_EMPTY);
+
+    //             if (isa($field)) {
+    //                 // foreach ($field as $k => $v) {
+    //                 //     if (!preg_match("|\s*as\s*|", $v)) {
+    //                 //         $first_field = trim($v);
+    //                 //         break;
+    //                 //     }
+    //                 // }
+
+    //                 if (preg_match("|\s*as\s*|", $field[0])) {
+    //                     $first_field = end(preg_split("|\s*as\s*|", $field[0]));
+    //                 } else {
+    //                     $first_field = $field[0];
+    //                 }
+    //             }
+    //         }
+
+    //         // if (str($first_field)) {
+    //         //     $sql = preg_replace("|^select|isU", "select row_number() over(order by $first_field desc) as no, ", $sql);
+    //         // }
+
+    //         // unset($first_field);
+    //         // unset($reg);
+
+    //         // $spl = preg_split("|\s*union\s*|isU", $sql, -1, PREG_SPLIT_NO_EMPTY);
+
+    //         // if (isa($spl)) {
+    //         //     $_sql = [];
+    //         //     foreach ($spl as $v) {
+    //         //         preg_match("|select\s*(.*?)\s*from|isU", $v, $reg);
+
+    //         //         $first_field = "";
+
+    //         //         if (str($reg[1])) {
+    //         //             $field = preg_split('|,|', $reg[1], -1, PREG_SPLIT_NO_EMPTY);
+
+    //         //             if (isa($field)) {
+    //         //                 foreach ($field as $field_v) {
+    //         //                     if (!preg_match("|\s*as\s*|", $field_v)) {
+    //         //                         $first_field = trim($field_v);
+    //         //                         break;
+    //         //                     }
+    //         //                 }
+    //         //             }
+    //         //         }
+
+    //         //         if (str($first_field)) {
+    //         //             $_sql[] = trim(preg_replace("|^select|isU", "select row_number() over(order by $first_field desc) as no,", $v));
+    //         //         } else {
+    //         //             $_sql[] = trim($v);
+    //         //         }
+
+    //         //         unset($first_field);
+    //         //         unset($reg);
+    //         //     }
+
+    //         //     $sql = join(" union ", $_sql);
+
+    //         // }
+
+    //         if (str($first_field)) {
+    //             if (stripos($first_field, ".") !== false) {
+    //                 list(, $first_field) = explode(".", $first_field);
+    //             }
+
+    //             $num = 0;
+    //             if (is_value($this->_limit)) {
+    //                 if (stripos($this->_limit, ",") !== false) {
+    //                     list($num) = explode(",", $this->_limit);
+    //                     $num       = (int) trim(str_ireplace("limit", "", $num));
+    //                 }
+    //             }
+
+    //             // $sql = "select row_number() over(order by $first_field desc) as no, t.* from ( $sql ) as t";
+
+    //             // list(, $first_field) = explode(".", $first_field);
+
+    //             // $sql = "select ROW_NUMBER() OVER w AS 'no', original_sql.* from ( $sql ) original_sql WINDOW w AS (ORDER BY $first_field)";
+
+    //             $sql = "select ( $num + ROW_NUMBER() OVER w ) AS 'no', original_sql.* from ( $sql ) original_sql";
+
+    //             if (is_value($this->_order_by)) {
+    //                 $sql .= " WINDOW w AS (" . $this->_order_by . ")";
+    //             } else {
+    //                 $sql .= " WINDOW w AS (ORDER BY $first_field)";
+    //             }
+
+    //             $this->_order_by = "";
+    //             $this->_limit    = "";
+    //         }
+
+    //         unset($first_field);
+    //         unset($reg);
+    //     } else {
+    //         $sql = "select ( @rownum := (@rownum + 1) ) as no, original_sql.* from ( $sql ) original_sql";
+
+    //         $this->execute("SET @rownum := 0;");
+    //     }
+
+    //     return $sql;
+    // }
+
+    /**
+     * To creates running sequence number with data fetched from database.
+     * 
+     * The sequence number of name is "num"
+     * 
+     * sample:
+     * 
+     * +-----+-----+------------------------------------------+
+     * | num | id  | subject                                  |
+     * +-----+-----+------------------------------------------+
+     * |   1 | 189 | Subject A                                |
+     * |   2 | 252 | Subject B                                |
+     * |   3 |  89 | Subject C                                |
+     * 
+     * 
+     * @param string $sql 
+     * @return string 
+     */
     public function set_display_num($sql)
     {
-        if ($this->version() >= 8) {
-            preg_match("|select\s*(.*?)\s*from|isU", $sql, $reg);
+        $num = 0;
+        if (is_value($this->_limit)) {
+            if (stripos($this->_limit, ",") !== false) {
+                list($num) = explode(",", $this->_limit);
+                $num       = (int) trim(str_ireplace("limit", "", $num));
+            }
+        }
 
-            $first_field = "";
+        preg_match("|select\s*(.*?)\s*from|isU", ($this->derived ? $this->derived_sql : $sql), $reg);
 
-            if (str($reg[1])) {
-                $field = preg_split('|,|', $reg[1], -1, PREG_SPLIT_NO_EMPTY);
+        $first_field = "";
 
-                if (isa($field)) {
-                    // foreach ($field as $k => $v) {
-                    //     if (!preg_match("|\s*as\s*|", $v)) {
-                    //         $first_field = trim($v);
-                    //         break;
-                    //     }
-                    // }
+        if (str($reg[1])) {
+            $field = preg_split('|,|', $reg[1], -1, PREG_SPLIT_NO_EMPTY);
 
-                    if (preg_match("|\s*as\s*|", $field[0])) {
-                        $first_field = end(preg_split("|\s*as\s*|", $field[0]));
-                    } else {
-                        $first_field = $field[0];
-                    }
+            if (isa($field)) {
+                if (preg_match("|\s*as\s*|", $field[0])) {
+                    $first_field = end(preg_split("|\s*as\s*|", $field[0]));
+                } else {
+                    $first_field = $field[0];
                 }
             }
+        }
 
-            // if (str($first_field)) {
-            //     $sql = preg_replace("|^select|isU", "select row_number() over(order by $first_field desc) as no, ", $sql);
-            // }
-
-            // unset($first_field);
-            // unset($reg);
-
-            // $spl = preg_split("|\s*union\s*|isU", $sql, -1, PREG_SPLIT_NO_EMPTY);
-
-            // if (isa($spl)) {
-            //     $_sql = [];
-            //     foreach ($spl as $v) {
-            //         preg_match("|select\s*(.*?)\s*from|isU", $v, $reg);
-
-            //         $first_field = "";
-
-            //         if (str($reg[1])) {
-            //             $field = preg_split('|,|', $reg[1], -1, PREG_SPLIT_NO_EMPTY);
-
-            //             if (isa($field)) {
-            //                 foreach ($field as $field_v) {
-            //                     if (!preg_match("|\s*as\s*|", $field_v)) {
-            //                         $first_field = trim($field_v);
-            //                         break;
-            //                     }
-            //                 }
-            //             }
-            //         }
-
-            //         if (str($first_field)) {
-            //             $_sql[] = trim(preg_replace("|^select|isU", "select row_number() over(order by $first_field desc) as no,", $v));
-            //         } else {
-            //             $_sql[] = trim($v);
-            //         }
-
-            //         unset($first_field);
-            //         unset($reg);
-            //     }
-
-            //     $sql = join(" union ", $_sql);
-
-            // }
-
+        if ($this->version() >= 8) {
             if (str($first_field)) {
                 if (stripos($first_field, ".") !== false) {
                     list(, $first_field) = explode(".", $first_field);
                 }
 
-                $num = 0;
-                if (is_value($this->_limit)) {
-                    if (stripos($this->_limit, ",") !== false) {
-                        list($num) = explode(",", $this->_limit);
-                        $num       = (int) trim(str_ireplace("limit", "", $num));
+                if ($this->derived) {
+                    $sql = preg_replace("/^select \* from/si", "select ( $num + ROW_NUMBER() OVER (" . (is_value($this->_order_by) ? $this->_order_by : "ORDER BY " . $first_field) . ") ) AS 'num', " . $this->_table . ".* from", $sql);
+                } else {
+                    $sql = preg_replace("/^select/si", "select ( $num + ROW_NUMBER() OVER (" . (is_value($this->_order_by) ? $this->_order_by : "ORDER BY " . $first_field) . ") ) AS 'num', ", $sql);
+                }
+            }
+
+        } else {
+            if ($this->derived) {
+                if (str($first_field)) {
+                    if (stripos($first_field, ".") !== false) {
+                        list(, $first_field) = explode(".", $first_field);
                     }
                 }
 
-                // $sql = "select row_number() over(order by $first_field desc) as no, t.* from ( $sql ) as t";
-
-                // list(, $first_field) = explode(".", $first_field);
-
-                // $sql = "select ROW_NUMBER() OVER w AS 'no', original_sql.* from ( $sql ) original_sql WINDOW w AS (ORDER BY $first_field)";
-
-                $sql = "select ( $num + ROW_NUMBER() OVER w ) AS 'no', original_sql.* from ( $sql ) original_sql";
-
-                if (is_value($this->_order_by)) {
-                    $sql .= " WINDOW w AS (" . $this->_order_by . ")";
-                } else {
-                    $sql .= " WINDOW w AS (ORDER BY $first_field)";
-                }
-
-                $this->_order_by = "";
-                $this->_limit    = "";
+                $sql = preg_replace("/^select \* from/si", "select ( @rownum := (@rownum + 1) ) as num, " . $this->_table . ".* from", $sql);
+            } else {
+                $sql = preg_replace("/^select/si", "select ( @rownum := (@rownum + 1) ) as num, ", $sql);
             }
 
-            unset($first_field);
-            unset($reg);
-        } else {
-            $sql = "select ( @rownum := (@rownum + 1) ) as no, original_sql.* from ( $sql ) original_sql";
-
-            $this->execute("SET @rownum := 0;");
+            $this->execute("SET @rownum := $num + 0;");
         }
+
+        $this->derived     = false;
+        $this->derived_sql = "";
+        $this->_order_by   = "";
+        $this->_limit      = "";
+        unset($first_field);
+        unset($reg);
 
         return $sql;
     }
@@ -3078,7 +3161,7 @@ trait QueryTrait
      * @param string $first_value Any value to compare
      * @param string $last_value Any value to compare
      * @param boolean $separate_query Default = false.  If set to true, will add " ( ) " in front and at the end of BETWEEN.  e.g output:  (id between 1 and 20)
-     * @return db_helper
+     * @return FDO
      */
     public function where_between($table_col_name, $first_value, $last_value, $separate_query = false)
     {
@@ -3092,12 +3175,22 @@ trait QueryTrait
      *
      * e.g:  select name from aaa;
      *
-     * num name
-     * 1.  ABC
-     * 2.  CDE
-     *
+     * To display running sequence number with data fetched from database.
+     * 
+     * The sequence number of name is "num"
+     * 
+     * sample:
+     * 
+     * +-----+-----+------------------------------------------+
+     * | num | id  | subject                                  |
+     * +-----+-----+------------------------------------------+
+     * |   1 | 189 | Subject A                                |
+     * |   2 | 252 | Subject B                                |
+     * |   3 |  89 | Subject C                                |
+     * 
+     * 
      * @param boolean $bool
-     * @return db_helper
+     * @return FDO
      */
     public function with_display_num($bool = true)
     {
