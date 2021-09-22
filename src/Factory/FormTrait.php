@@ -35,7 +35,7 @@ trait FormTrait
      *
      * @param string $input_key_name $_GET key name
      * @param string $type Variable data type.  e.g:  crypt, date, number, like (SQL search by like)
-     * @return form
+     * @return FDO
      */
     public function and_get($input_key_name = null, $type = "")
     {
@@ -117,7 +117,7 @@ trait FormTrait
      * @param string $input_key_name
      * @param string|array $column_name
      * @param string $type
-     * @return form
+     * @return FDO
      */
     public function and_input($input_key_name, $column_name, $type = "")
     {
@@ -211,7 +211,7 @@ trait FormTrait
      *
      * @param array|string $keys $_POST key name
      * @param string $raws $_POST
-     * @return form
+     * @return FDO
      */
     public function and_keys($keys, &$raws)
     {
