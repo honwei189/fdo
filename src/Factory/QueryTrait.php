@@ -2388,21 +2388,21 @@ trait QueryTrait
 
     /**
      * To creates running sequence number with data fetched from database.
-     * 
+     *
      * The sequence number of name is "num"
-     * 
+     *
      * sample:
-     * 
+     *
      * +-----+-----+------------------------------------------+
      * | num | id  | subject                                  |
      * +-----+-----+------------------------------------------+
      * |   1 | 189 | Subject A                                |
      * |   2 | 252 | Subject B                                |
      * |   3 |  89 | Subject C                                |
-     * 
-     * 
-     * @param string $sql 
-     * @return string 
+     *
+     *
+     * @param string $sql
+     * @return string
      */
     public function set_display_num($sql)
     {
@@ -3176,19 +3176,19 @@ trait QueryTrait
      * e.g:  select name from aaa;
      *
      * To display running sequence number with data fetched from database.
-     * 
+     *
      * The sequence number of name is "num"
-     * 
+     *
      * sample:
-     * 
+     *
      * +-----+-----+------------------------------------------+
      * | num | id  | subject                                  |
      * +-----+-----+------------------------------------------+
      * |   1 | 189 | Subject A                                |
      * |   2 | 252 | Subject B                                |
      * |   3 |  89 | Subject C                                |
-     * 
-     * 
+     *
+     *
      * @param boolean $bool
      * @return FDO
      */
