@@ -40,7 +40,7 @@ class SQL
     public $username           = null;
     public $user_id            = null;
     public $user_only          = false;
-    public $parent = "";
+    public $parent             = "";
     public $_id                = 0;
     public $_passthrough       = false;
     public $_verify_sql        = false;
@@ -837,7 +837,7 @@ class SQL
 
             return $value;
         } else {
-            return env($key, $default);
+            return "env"($key, $default);
         }
     }
 
