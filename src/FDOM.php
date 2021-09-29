@@ -24,35 +24,39 @@ namespace honwei189\FDO;
  * class YOUR_CLASS extends fdom {
  *
  * }
- * 
+ *
  * or;
- * 
+ *
  * $app->bind("honwei189\\FDO\\FDOM");
  * $app->FDOM()::connect(config::get("db", "mysql"));
  * echo $app->FDOM()::user()->debug()->find();
- * 
+ *
  * or;
- * 
+ *
  * echo FDOM::version();
  * FDOM::user()->debug()->find();
- * 
+ *
  *
  * @package     FDO
  * @subpackage
  * @author      Gordon Lim <honwei189@gmail.com>
  * @link        https://github.com/honwei189/fdo/
- * @version     "1.0.0" 
- * @since       "1.0.0" 
+ * @version     "1.0.0"
+ * @since       "1.0.0"
  */
 class FDOM
 {
-    static $instance = null;
-    static $rc;
-    protected static $table;
-    protected static $id;
+    private static $instance        = null;
+    private static $parent_instance = null;
+    private static $rc;
+    protected static $_fillable;
+    protected static $_table;
+    protected $data;
+    protected $id;
 
-    public function __construct(){
-        
+    public function __construct()
+    {
+
     }
 
     public function __call($name, $arguments)
@@ -65,6 +69,11 @@ class FDOM
     {
         self::get_table();
         return self::call($name, $arguments);
+    }
+
+    public function __get($name)
+    {
+        return ($this->$name ?? self::call("__get", [$name]));
     }
 
     public function __set($name, $val)
@@ -85,11 +94,12 @@ class FDOM
     /**
      * Show the form for creating a new resource.
      *
-     * @return Response
+     * @param mixed $data Array type.  e.g: ["gender" => "M", "name" => "The name"]
+     * @return FDO
      */
-    public static function create()
+    public static function create($data = null)
     {
-        //
+        return self::save($data);
     }
 
     /**
@@ -116,7 +126,7 @@ class FDOM
      * Set SQL value.  e.g:  abc::set("name", "My name"); //output = insert into abc (name) values ('My name');
      * @param string $name table field name
      * @param string $val value
-     * @return fdo 
+     * @return fdo
      */
     public static function set($name, $val)
     {
@@ -127,7 +137,7 @@ class FDOM
     /**
      * Store a newly created resource in storage.
      *
-     * @return Response
+     * @return FDO
      */
     public static function store()
     {
@@ -140,9 +150,9 @@ class FDOM
      * @param  int  $id
      * @return Response
      */
-    public static function edit($id)
+    public static function edit($data = null, $id = null)
     {
-        //
+        return self::save($data);
     }
 
     /**
@@ -167,27 +177,38 @@ class FDOM
 
     public static function findOrFail($id)
     {
-        return self::call("is_exists_id", $id);
-    }
+        self::get_table();
+        $o = new static;
+        // return self::call("is_exists_id", $id) && self::$id = $id;
+        // self::$data = self::call("get", [self::$_table, "*", $id]);
+        // $o::$data = self::call("by_id", $id)->get();
+        $o->data = self::call("by_id", $id)->get();
+        
+        if (is_array($o->data) && count($o->data) > 0) {
+            // pre(self::$parent_instance->fillable);
+            // $o::set("fillable", ['dd']);
 
-    public static function save()
-    {
-        $request = (object) app("request");
+            $o->id = $id;
+            // self::$id = $id;
 
-        // $flayer = app("flayer");
-        // $flayer::bind("\\honwei189\\http");
-        // $http = $flayer->http();
-        // pre($http->get());
-
-        $post = $request->post();
-
-        if (isset($post) && is_array($post) && count($post) > 0) {
-            foreach ($post as $k => $v) {
-                self::call_vars($k, $v);
-            }
+            // self::set("_id", $id);
+            return $o;
+            // return self::$instance;
         }
 
-        self::call("debug");
+        return false;
+    }
+
+    /**
+     * Save data into database
+     *
+     * @param mixed $data Array type.  e.g: ["gender" => "M", "name" => "The name"]
+     * @return FDO
+     */
+    public static function save($data = null)
+    {
+        self::build_save_update($data);
+        // self::call("debug");
         return self::call("save");
     }
 
@@ -217,6 +238,8 @@ class FDOM
             $id = self::$id;
         }
 
+        self::build_save_update();
+
         if (!is_null($id)) {
             return self::call("by_id", $id)->update();
         } else {
@@ -227,6 +250,51 @@ class FDOM
     public static function where($s, $v = null)
     {
         return self::call("where", [$s, $v]);
+    }
+
+    private static function build_save_update($data = null)
+    {
+        if (is_null($data) && !is_array($data)) {
+            $request = (object) app("request");
+
+            // $flayer = app("flayer");
+            // $flayer::bind("\\honwei189\\http");
+            // $http = $flayer->http();
+            // pre($http->get());
+
+            $data = $request->post();
+        }
+
+        self::$instance->fill($data);
+
+        // if (is_array(self::$instance->fillable) && count(self::$instance->fillable) > 0) {
+        //     $match = false;
+
+        //     foreach (self::$instance->fillable as $v) {
+        //         if (isset($data[$v])) {
+        //             self::call_vars($v, ($data[$v]));
+        //             $match = true;
+        //         }
+        //     }
+
+        //     if (!$match) {
+        //         die("<h1>No data columns matched with " . get_called_class() . " ->\$fillable - " . implode(", ", self::$instance->fillable) . "</h1>");
+        //     }
+        // } else {
+        //     if (isset($data) && is_array($data) && count($data) > 0) {
+        //         foreach ($data as $k => $v) {
+        //             switch ($k) {
+        //                 case "_token":
+        //                 case "_method":
+        //                     break;
+
+        //                 default:
+        //                     self::call_vars($k, $v);
+        //                     break;
+        //             }
+        //         }
+        //     }
+        // }
     }
 
     private static function call($name, $arguments = [])
@@ -249,8 +317,24 @@ class FDOM
 
     private static function get_table()
     {
+        // pre(self::get_var("fillable"));
+
         // self::get_var("_table");
-        if (!str(static::$table)) {
+
+        self::load_instance();
+
+        if (is_object(self::$parent_instance)) {
+            self::$_table             = self::$parent_instance->table ?? "";
+            self::$instance->fillable = self::$parent_instance->fillable ?? [];
+            self::$instance->parent   = static::class;
+        }
+
+        if (class_exists("Auth")) {
+            self::$instance->username = ("\Auth")::user()->username;
+            self::$instance->user_id  = ("\Auth")::id();
+        }
+
+        if (!str(static::$_table)) {
             $tbl = self::call("get_table");
 
             if (!str($tbl)) {
@@ -260,7 +344,7 @@ class FDOM
                     $_ = explode("\\", $p);
 
                     // call_user_func_array(array(self::load_instance(), "set_table"), [end($_)]);
-                    self::call("set_table", [end($_)]);
+                    self::call("set_table", [strtolower(end($_))]);
                     unset($_);
                 }
 
@@ -270,7 +354,7 @@ class FDOM
             unset($tbl);
         } else {
             // self::call("debug");
-            call_user_func_array(array(self::load_instance(), "set_table"), [static::$table]);
+            call_user_func_array(array(self::load_instance(), "set_table"), [static::$_table]);
         }
         // return self::load_instance($name, $arguments);
         // return self::load_instance()->$name($arguments);
@@ -284,14 +368,29 @@ class FDOM
 
     private static function load_instance($name = null, $arguments = null)
     {
+        $p = get_called_class();
+
         if (!self::$instance) {
-            if(function_exists("app")){
-                self::$instance = app("FDO");
-            }else{
+            if (function_exists("app")) {
+                self::$instance = app((class_exists("FDO") ? "FDO" : "fdo"));
+
+                if (is_value($p)) {
+                    self::$parent_instance = app($p);
+
+                    if (!is_object(self::$parent_instance)) {
+                        self::$parent_instance = new $p;
+                    }
+                }
+            } else {
                 self::$instance = new SQL;
+
+                if (is_value($p)) {
+                    self::$parent_instance = new $p;
+                }
             }
         }
 
+        self::$instance->fetch_mode(\PDO::FETCH_ASSOC);
         return self::$instance;
     }
 }
