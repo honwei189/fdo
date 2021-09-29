@@ -30,7 +30,9 @@ namespace honwei189\FDO\Factory;
  */
 trait OperateTrait
 {
-    private $_vars = [];
+    public $fillable;
+    private $is_nofillable = false;
+    private $_vars         = [];
 
     /**
      * @access private
@@ -69,7 +71,7 @@ trait OperateTrait
     {
         if ($sql_where === null) {
             if ($this->_where === null) {
-                $sql_where = "crby = '" . $this->_user . "' and id = " . (int) $this->_id;
+                $sql_where = ($this->user_only && is_int($this->user_id) ? "created_by = " . $this->user_id : "") . " and id = " . (int) $this->_id;
             } else {
                 $sql_where = $this->_where;
             }
@@ -202,11 +204,67 @@ trait OperateTrait
                 ob_end_clean();
 
                 $this->write_exceptional($sql, $e->getMessage(), $error);
-                $this->error($rs);
+                $this->error($e);
                 unset($error);
                 unset($except);
             }
         }
+    }
+
+    /**
+     * Mass assignment data properties by using array notation.
+     *
+     * It will check from model's $fillable attribute to determine what properties should allowed stores into DB
+     *
+     * Example :
+     *
+     * $fdo->fill(["name" => "Tester", "email" => "tester@example"]);
+     *
+     * or;
+     *
+     * FDOM::fill(["name" => "Tester", "email" => "tester@example"]);
+     *
+     * @param array $array
+     * @return FDO
+     */
+    public function fill(array $array)
+    {
+        if (!$this->is_nofillable) {
+            if (is_array($this->fillable) && count($this->fillable) > 0) {
+                $match = false;
+                foreach ($this->fillable as $v) {
+                    if (isset($array[$v])) {
+                        $this->_vars[$v] = $array[$v];
+                        $match           = true;
+                    }
+                }
+
+                if (!$match) {
+                    die($this->print_sql_format("No data columns matched with " . (str($this->parent) ? $this->parent . " ->" : "") . "\$fillable - " . implode(", ", $this->fillable)));
+                }
+            }
+
+            return $this;
+        }
+
+        if (isset($array) && is_array($array) && count($array) > 0) {
+            foreach ($array as $k => $v) {
+                switch ($k) {
+                    case "_token":
+                    case "_method":
+                    case "fillable":
+                        break;
+
+                    default:
+                        $this->_vars[$k] = $v;
+                        break;
+                }
+            }
+        } else {
+            die($this->print_sql_format("No passing any data columns to save into database"));
+        }
+
+        return $this;
     }
 
     /**
@@ -217,6 +275,30 @@ trait OperateTrait
     public function get_insert_id()
     {
         return $this->_id;
+    }
+
+    /**
+     * Ignore $fillable
+     *
+     * @param bool $bool Default is true
+     * @return FDO
+     */
+    public function nofillable(bool $bool = true)
+    {
+        $this->is_nofillable = $bool;
+
+        return $this;
+    }
+
+    /**
+     * Ignore $fillable.  Alias of nofillable()
+     *
+     * @param bool $bool Default is true
+     * @return FDO
+     */
+    public function notfillable(bool $bool = true)
+    {
+        return $this->nofillable($bool);
     }
 
     /**
@@ -243,7 +325,7 @@ trait OperateTrait
 
             if (!is_value($sql_where)) {
                 if ($this->_where === null) {
-                    $sql_where = "crby = '" . $this->_user . "' and id = " . (int) $this->_id;
+                    $sql_where = ($this->user_only && is_int($this->user_id) ? "created_by = " . $this->user_id : "") . " and id = " . (int) $this->_id;
                 } else {
                     $sql_where = $this->_where;
                 }
@@ -713,10 +795,11 @@ trait OperateTrait
     public function update($sql_where = null)
     {
         if (is_array($sql_where)) {
-            foreach ($sql_where as $k => $v) {
-                $this->_vars[$k] = $v;
-            }
+            // foreach ($sql_where as $k => $v) {
+            //     $this->_vars[$k] = $v;
+            // }
 
+            $this->fill($sql_where);
             $sql_where = null;
         }
 
@@ -726,7 +809,7 @@ trait OperateTrait
 
             if ($sql_where === null) {
                 if (!str($this->_where)) {
-                    $sql_where = "crby = '" . $this->_user . "' and id = " . (int) $this->_id;
+                    $sql_where = ($this->user_only && is_int($this->user_id) ? "created_by = " . $this->user_id : "") . " and id = " . (int) $this->_id;
                 } else {
                     $sql_where = $this->_where;
                 }
@@ -767,6 +850,8 @@ trait OperateTrait
             unset($this->{"cby"});
             unset($this->{"created_at"});
             unset($this->{"created_by"});
+            unset($this->{"fillable"});
+            unset($this->_vars['fillable']);
 
             foreach ($this->_vars as $k => $v) {
                 if (str($v)) {
