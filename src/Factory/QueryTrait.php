@@ -371,20 +371,21 @@ trait QueryTrait
     /**
      * Set PDO fetch mode
      *
-     * @param string $mode Default is FETCH_INTO
+     * @param string $mode Default is FETCH_ASSOC
      * @param string $class_name Default is fdoData.  You can use your custom class to fetch data from DB save into your class
      * @return FDO
      */
-    public function fetch_mode($mode = \PDO::FETCH_LAZY, $class_name = "fdoData")
+    public function fetch_mode($mode = \PDO::FETCH_ASSOC, $class_name = "\\honwei189\\FDO\\fdoData")
     {
         // if (str($class_name)){
         //     $rs->setFetchMode($mode, $class_name);
         // }
-        if (!is_object($class_name)) {
-            $class_name = __NAMESPACE__ . "\\" . $class_name;
-        }
 
-        $this->fetch_mode = (object) ["mode" => $mode, "class" => $class_name];
+        if ($mode == \PDO::FETCH_LAZY || $mode == \PDO::FETCH_OBJ || $mode == \PDO::FETCH_INTO) {
+            $this->fetch_mode = (object) ["mode" => $mode, "class" => $class_name];
+        } else {
+            $this->fetch_mode = (object) ["mode" => $mode, "class" => null];
+        }
 
         return $this;
     }
@@ -881,6 +882,7 @@ trait QueryTrait
 
                 if ($count) {
                     return $this->read_one_sql($sql, false, \PDO::FETCH_COLUMN, 0);
+                    // return $this->read_one_sql($sql, false, $this->fetch_mode->mode, 0);
                 } else {
                     return $this->read_one_sql($sql, false, $this->fetch_mode->mode);
                 }
@@ -891,7 +893,7 @@ trait QueryTrait
                 $id = "'$id'";
             }
 
-            $sql = "select $table_cols from $table where $query_by = $id'";
+            $sql = "select $table_cols from $table where $query_by = $id";
 
             // if ($this->is_enabled_query_log()) {
             //     $this->write_audit_log(null, "Q", null, $sql);
@@ -946,7 +948,7 @@ trait QueryTrait
             if (!is_null($column_num)) {
                 $mode = \PDO::FETCH_COLUMN;
             } else {
-                $mode = \PDO::FETCH_INTO;
+                $mode = \PDO::FETCH_ASSOC;
             }
 
             if ($this->_get_sql) {
@@ -1671,7 +1673,7 @@ trait QueryTrait
      * @param integer $column_num
      * @return array
      */
-    public function read_all_sql($sql, $audit = false, $mode = \PDO::FETCH_INTO, $column_num = null)
+    public function read_all_sql($sql, $audit = false, $mode = \PDO::FETCH_ASSOC, $column_num = null)
     {
         $this->_set_sql_to_sub = false;
         $this->_sql            = "";
@@ -1938,7 +1940,7 @@ trait QueryTrait
      * @param integer $column_num
      * @return array
      */
-    public function read_one_sql($sql, $audit = false, $mode = \PDO::FETCH_INTO, $column_num = null)
+    public function read_one_sql($sql, $audit = false, $mode = \PDO::FETCH_ASSOC, $column_num = null)
     {
         if (!empty($this->instance)) {
             $this->action_type = "Q";
@@ -1973,8 +1975,11 @@ trait QueryTrait
                     $rs->setFetchMode($mode, $column_num); //FETCH_ROW
                 } else {
                     if ($mode == \PDO::FETCH_INTO) {
-                        $rs->setFetchMode($mode, (is_object($this->fetch_mode->class) ? $this->fetch_mode->class : new $this->fetch_mode->class)); //FETCH_ROW
-
+                        if (!is_null($this->fetch_mode->class)) {
+                            $rs->setFetchMode($mode, (is_object($this->fetch_mode->class) ? $this->fetch_mode->class : new $this->fetch_mode->class)); //FETCH_ROW
+                        } else {
+                            $rs->setFetchMode($mode);
+                        }
                     } else {
                         $rs->setFetchMode($mode); //FETCH_ROW
                     }
@@ -2090,7 +2095,7 @@ trait QueryTrait
 
                         unset($data);
                     } else {
-                        return $rs->fetch();
+                        return $rs->fetch(\PDO::FETCH_ASSOC);
                     }
                 }
             } catch (\PDOException $e) {
@@ -2103,7 +2108,7 @@ trait QueryTrait
                 ob_end_clean();
 
                 $this->write_exceptional($sql, $e->getMessage(), $error);
-                $this->error($rs);
+                $this->error($e);
                 unset($error);
                 unset($except);
             }
@@ -2119,7 +2124,7 @@ trait QueryTrait
      * @param integer $column_num
      * @return array
      */
-    public function read_sql($sql, $audit = false, $mode = \PDO::FETCH_INTO)
+    public function read_sql($sql, $audit = false, $mode = \PDO::FETCH_ASSOC)
     {
         if (!empty($this->instance)) {
             $this->action_type = "Q";
