@@ -158,7 +158,7 @@ trait OperateTrait
             try {
                 $rs                  = $this->instance->prepare($sql);
                 $this->affected_Rows = $rs->execute();
-                $this->error($rs);
+                $this->error($rs, $sql);
 
                 unset($rs);
                 return $this->affected_Rows;
@@ -171,7 +171,7 @@ trait OperateTrait
                 ob_end_clean();
 
                 $this->write_exceptional($sql, $e->getMessage(), $error);
-                $this->error($rs);
+                $this->error($rs, $sql);
                 unset($error);
                 unset($except);
             }
@@ -204,7 +204,7 @@ trait OperateTrait
                 ob_end_clean();
 
                 $this->write_exceptional($sql, $e->getMessage(), $error);
-                $this->error($e);
+                $this->error($e, $sql);
                 unset($error);
                 unset($except);
             }
@@ -809,7 +809,7 @@ trait OperateTrait
 
             if ($sql_where === null) {
                 if (!str($this->_where)) {
-                    $sql_where = ($this->user_only && is_int($this->user_id) ? "created_by = " . $this->user_id : "") . " and id = " . (int) $this->_id;
+                    $sql_where = ($this->user_only && is_int($this->user_id) ? "created_by = " . $this->user_id . " and " : "") . "id = " . (int) $this->_id;
                 } else {
                     $sql_where = $this->_where;
                 }
@@ -993,7 +993,7 @@ trait OperateTrait
         if (!empty($this->instance)) {
             $rs                  = $this->instance->prepare($sql);
             $this->affected_Rows = $rs->execute();
-            $this->error($rs);
+            $this->error($rs, $sql);
 
             unset($rs);
             return $this->affected_Rows;

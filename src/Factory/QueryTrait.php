@@ -443,7 +443,7 @@ trait QueryTrait
             if (is_array($_sql)) {
                 // $stm = "select " . $this->_gen_select_cols($find_by_column_name, $select_cols_name)[0] . " from (\n (" . join(")\nunion\n (", $_sql) . ")\n) as " . $this->_table . $this->_group_by . $this->_order_by . $this->_limit;
 
-                $stm = "select * from (\n (" . join(")\nunion\n (", $_sql) . ")\n) as " . $this->_table . $this->_group_by . $this->_order_by . $this->_limit;
+                $stm = "select * from (\n (" . join(")\nunion all\n (", $_sql) . ")\n) as " . $this->_table . $this->_group_by . $this->_order_by . $this->_limit;
             } else {
                 return [];
             }
@@ -1612,7 +1612,7 @@ trait QueryTrait
                 $rs = $this->instance->prepare($sql);
                 $rs->execute();
                 $Count = $rs->rowCount();
-                $this->error($rs);
+                $this->error($rs, $sql);
 
                 $rs->closeCursor();
 
@@ -1620,7 +1620,7 @@ trait QueryTrait
 
                 return $Count;
             } catch (\PDOException $e) {
-                $this->error($rs);
+                $this->error($rs, $sql);
 
                 ob_start();
                 print_r($e->errorInfo);
@@ -1630,7 +1630,7 @@ trait QueryTrait
                 ob_end_clean();
 
                 $this->write_exceptional($sql, $e->getMessage(), $error);
-                $this->error($rs);
+                // $this->error($rs);
                 unset($error);
                 unset($except);
             }
@@ -1703,17 +1703,18 @@ trait QueryTrait
                         $rs->setFetchMode($mode); //FETCH_ROW
                     }
 
-                    $this->error($rs);
+                    $this->error($rs, $sql);
                 } catch (\PDOException $e) {
                     ob_start();
-                    print_r($e->errorInfo);
+                    // print_r($e->errorInfo);
                     $except = new \Exception;
                     print_r($except->getTraceAsString());
                     $error = ob_get_contents();
                     ob_end_clean();
 
                     $this->write_exceptional($sql, $e->getMessage(), $error);
-                    $this->error($rs);
+                    // $this->error($rs, $sql);
+                    $this->error($e, $sql);
                     unset($error);
                     unset($except);
                 }
@@ -1924,7 +1925,7 @@ trait QueryTrait
                 ob_end_clean();
 
                 $this->write_exceptional($sql, $e->getMessage(), $error);
-                $this->error($rs);
+                $this->error($rs, $sql);
                 unset($error);
                 unset($except);
             }
@@ -1984,7 +1985,7 @@ trait QueryTrait
                         $rs->setFetchMode($mode); //FETCH_ROW
                     }
                 }
-
+                
                 if ($this->_set_encrypt_id) {
                     if ($mode == \PDO::FETCH_INTO || $mode == \PDO::FETCH_LAZY) {
                         $vars = null;
@@ -2004,7 +2005,6 @@ trait QueryTrait
                                 }
                             } else {
                                 $vars = (array) $data;
-
                                 foreach ($vars as $k => $v) {
                                     if (stripos($k, "_id") !== false || (string) $k == "id" || substr($k, -2) == "id") {
                                         $data->$k = trim(flayer::Crypto()->encrypt($v));
@@ -2021,7 +2021,8 @@ trait QueryTrait
                         unset($data);
                     } else {
                         $count = $rs->rowCount();
-                        $data  = $rs->fetch();
+                        $data  = $rs->fetch($this->fetch_mode->mode);
+
                         if ($count > 0) {
                             if (is_array($data)) {
                                 foreach ($data as $k => $v) {
@@ -2063,7 +2064,7 @@ trait QueryTrait
                         unset($data);
                     } else {
                         $count = $rs->rowCount();
-                        $data  = $rs->fetch();
+                        $data  = $rs->fetch($this->fetch_mode->mode);
                         if ($count > 0) {
                             if (is_array($data)) {
                                 foreach ($data as $k => $v) {
@@ -2101,14 +2102,15 @@ trait QueryTrait
             } catch (\PDOException $e) {
                 //$this->instance->setAttribute( \PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
                 ob_start();
-                print_r($e->errorInfo);
+                // print_r($e->errorInfo);
+                // exit;
                 $except = new \Exception;
                 print_r($except->getTraceAsString());
                 $error = ob_get_contents();
                 ob_end_clean();
 
                 $this->write_exceptional($sql, $e->getMessage(), $error);
-                $this->error($e);
+                $this->error($e, $sql);
                 unset($error);
                 unset($except);
             }
@@ -2137,18 +2139,18 @@ trait QueryTrait
                 $rs                  = $this->instance->prepare($sql);
                 $this->affected_Rows = $rs->execute();
                 $rs->setFetchMode($mode); //FETCH_ROW
-                $this->error($rs);
+                $this->error($rs, $sql);
                 return $rs;
             } catch (\PDOException $e) {
                 ob_start();
-                print_r($e->errorInfo);
+                // print_r($e->errorInfo);
                 $except = new \Exception;
                 print_r($except->getTraceAsString());
                 $error = ob_get_contents();
                 ob_end_clean();
 
                 $this->write_exceptional($sql, $e->getMessage(), $error);
-                $this->error($rs);
+                $this->error($rs, $sql);
                 unset($error);
                 unset($except);
             }
