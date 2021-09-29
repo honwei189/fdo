@@ -37,6 +37,10 @@ class SQL
     public $fetch_mode         = null;
     public $instance           = null;
     public $is_error           = false;
+    public $username           = null;
+    public $user_id            = null;
+    public $user_only          = false;
+    public $parent = "";
     public $_id                = 0;
     public $_passthrough       = false;
     public $_verify_sql        = false;
@@ -57,6 +61,7 @@ class SQL
     private $_soft_update      = false;
     private $_show_sql         = false;
     private $_user             = null;
+    private $_user_id          = null;
 
     // protected $require = ["helper", "crud"];
     // protected $require = ["honwei189\\data"];
@@ -89,7 +94,7 @@ class SQL
 
             // check is laravel
             if (class_exists("Illuminate\Database\Eloquent\Model") && class_exists("Carbon\Laravel\ServiceProvider") && class_exists("DB")) {
-                $this->set_instance(\DB::connection('mysql')->getPdo());
+                $this->set_instance(("\DB")::connection('mysql')->getPdo());
                 $this->instance->setAttribute(\PDO::ATTR_EMULATE_PREPARES, false);
             } else {
                 if (file_exists($this->base_path . "/.env")) {
