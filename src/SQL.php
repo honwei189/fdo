@@ -115,7 +115,8 @@ class SQL
 
         $this->version();
         $this->fetch_mode();
-        $this->_user = \honwei189\Flayer\Data::get("user");
+        $this->_user    = \honwei189\Flayer\Data::get("user");
+        $this->_user_id = \honwei189\Flayer\Data::get("user_id");
     }
 
     /**
@@ -548,9 +549,9 @@ class SQL
                                     $options['write']['username'],
                                     $options['write']['password'],
                                     [
-                                        \PDO::ATTR_PERSISTENT         => true,
-                                        \PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8",
-                                        \PDO::MYSQL_ATTR_INIT_COMMAND => "SET CHARACTER SET utf8",
+                                        \PDO::ATTR_PERSISTENT => true,
+                                        // \PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8",
+                                        // \PDO::MYSQL_ATTR_INIT_COMMAND => "SET CHARACTER SET utf8",
                                     ]
                                 );
                                 $this->instance['write']->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
@@ -562,9 +563,9 @@ class SQL
                                         $options['username'],
                                         $options['password'],
                                         [
-                                            \PDO::ATTR_PERSISTENT         => true,
-                                            \PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8",
-                                            \PDO::MYSQL_ATTR_INIT_COMMAND => "SET CHARACTER SET utf8",
+                                            \PDO::ATTR_PERSISTENT => true,
+                                            // \PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8",
+                                            // \PDO::MYSQL_ATTR_INIT_COMMAND => "SET CHARACTER SET utf8",
                                         ]
                                     );
 
@@ -617,6 +618,14 @@ class SQL
         $this->_table_joins_table      = null;
         $this->_table_left_joins       = null;
         $this->_table_left_joins_table = null;
+        $this->username                = null;
+        $this->user_id                 = null;
+        $this->user_only               = null;
+        $this->parent                  = null;
+        $this->fillable                = null;
+        $this->is_nofillable           = null;
+        $this->derived                 = false;
+        $this->derived_sql             = "";
 
         if ($clear_all) {
             $this->_table_alias      = null;
@@ -762,15 +771,27 @@ class SQL
         }
     }
 
-    public function error($rs)
+    public function error($rs, $additional_string = "")
     {
         if (is_object($rs)) {
             if (get_class($rs) == "PDOException") {
                 $this->is_error = true;
-                echo $rs->getMessage();
+                if (\honwei189\Flayer\config::get("flayer", "debug")) {
+                    $msg = "";
+
+                    if (is_object($rs)) {
+                        $msg = $rs->getMessage();
+                    } else if (is_array($rs)) {
+                        $msg = end($rs);
+                    } else if (is_string($rs)) {
+                        $msg = $rs;
+                    }
+
+                    $this->throwout($msg, $additional_string);
+                }
             }
         } else {
-            if (is_object($rs)) {
+            if (\honwei189\Flayer\config::get("flayer", "debug") && is_object($rs)) {
                 $this->error = $rs->errorInfo();
 
                 if (count($this->error) > 1) {
@@ -1029,172 +1050,7 @@ class SQL
                 // echo $string . PHP_EOL;
                 echo str_replace("<br>", PHP_EOL, $additional_string) . PHP_EOL;
             } else {
-                echo "<style>
-            blockquote{
-            display:block;
-            background: #fff;
-            padding: 15px 20px 15px 45px;
-            margin: 0 0 20px;
-            position: relative;
-
-            /*Font*/
-            font-family: Georgia, serif;
-            font-size: 14px;
-            line-height: 1.2;
-            color: #666;
-
-            /*Box Shadow - (Optional)*/
-            -moz-box-shadow: 2px 2px 15px #ccc;
-            -webkit-box-shadow: 2px 2px 15px #ccc;
-            box-shadow: 2px 2px 15px #ccc;
-
-            /*Borders - (Optional)*/
-            border-left-style: solid;
-            border-left-width: 15px;
-            border-right-style: solid;
-            border-right-width: 2px;
-            }
-
-            blockquote::before{
-            content: \"\\201C\"; /*Unicode for Left Double Quote*/
-
-            /*Font*/
-            font-family: Georgia, serif;
-            font-size: 60px;
-            font-weight: bold;
-            color: #999;
-
-            /*Positioning*/
-            position: absolute;
-            left: 10px;
-            top:5px;
-
-            }
-
-            blockquote::after{
-            /*Reset to make sure*/
-            content: \"\";
-            }
-
-            blockquote a{
-            text-decoration: none;
-            background: #eee;
-            cursor: pointer;
-            padding: 0 3px;
-            color: #c76c0c;
-            }
-
-            blockquote a:hover{
-            color: #666;
-            }
-
-            blockquote em{
-            font-style: italic;
-            }
-
-            /*Default Color Palette*/
-            blockquote.default{
-            border-left-color: #656d77;
-            border-right-color: #434a53;
-            }
-
-            /*Grapefruit Color Palette*/
-            blockquote.grapefruit{
-            border-left-color: #ed5565;
-            border-right-color: #da4453;
-            }
-
-            /*Bittersweet Color Palette*/
-            blockquote.bittersweet{
-            border-left-color: #fc6d58;
-            border-right-color: #e95546;
-            }
-
-            /*Sunflower Color Palette*/
-            blockquote.sunflower{
-            border-left-color: #ffcd69;
-            border-right-color: #f6ba59;
-            }
-
-            /*Grass Color Palette*/
-            blockquote.grass{
-            border-left-color: #9fd477;
-            border-right-color: #8bc163;
-            }
-
-            /*Mint Color Palette*/
-            blockquote.mint{
-            border-left-color: #46cfb0;
-            border-right-color: #34bc9d;
-            }
-
-            /*Aqua Color Palette*/
-            blockquote.aqua{
-            border-left-color: #4fc2e5;
-            border-right-color: #3bb0d6;
-            }
-
-            /*Blue Jeans Color Palette*/
-            blockquote.bluejeans{
-            border-left-color: #5e9de6;
-            border-right-color: #4b8ad6;
-            }
-
-            /*Lavander Color Palette*/
-            blockquote.lavander{
-            border-left-color: #ad93e6;
-            border-right-color: #977bd5;
-            }
-
-            /*Pinkrose Color Palette*/
-            blockquote.pinkrose{
-            border-left-color: #ed87bd;
-            border-right-color: #d870a9;
-            }
-
-            /*Light Color Palette*/
-            blockquote.light{
-            border-left-color: #f5f7fa;
-            border-right-color: #e6e9ed;
-            }
-
-            /*Gray Color Palette*/
-            blockquote.gray{
-            border-left-color: #ccd1d8;
-            border-right-color: #aab2bc;
-            }
-            </style>
-                    ";
-
-                $colors = [
-                    "default",
-                    "grapefruit",
-                    "bittersweet",
-                    "sunflower",
-                    "grass",
-                    "mint",
-                    "aqua",
-                    "bluejeans",
-                    "lavander",
-                    "pinkrose",
-                    "light",
-                    "gray",
-                ];
-
-                $random = array_rand($colors, 1);
-                $color  = $colors[$random];
-
-                echo "<blockquote class=\"$color\">
-            <h1><span class=\"grapefruit\">" . \sqlformatter::format($string) . "</span></h1>
-            <p></p>
-            <code>
-            $additional_string
-            </code>
-            </blockquote>";
-
-                unset($colors);
-                unset($color);
-                unset($random);
+                $this->throwout_html(\sqlformatter::format($string), $additional_string);
             }
         }
     }
@@ -1338,6 +1194,31 @@ class SQL
     public function table($table_name, $alias_name = null)
     {
         return $this->set_table($table_name, $alias_name);
+    }
+
+    /**
+     * Output exception message with HTML formatted
+     *
+     * @param mixed $string
+     * @param mixed $additional_string
+     */
+    public function throwout($string, $additional_string = null)
+    {
+
+        if (class_exists("Illuminate\Database\Eloquent\Model") && class_exists("Carbon\Laravel\ServiceProvider")) {
+            if (str($additional_string)) {
+                // $html($string);
+                // throw new \Exception($additional_string);
+
+                $this->throwout_html(\sqlformatter::format($additional_string));
+                throw new \Exception($string);
+            } else {
+                throw new \Exception($string);
+            }
+        } else {
+            $this->throwout_html($string, $additional_string);
+            exit;
+        }
     }
 
     public function verify($bool = true)
@@ -1741,6 +1622,176 @@ class SQL
         unset($inputs);
         unset($schema);
         unset($sql);
+    }
+
+    private function throwout_html($string, $additional_string = null)
+    {
+        echo "<style>
+                blockquote{
+                display:block;
+                background: #fff;
+                padding: 15px 20px 15px 45px;
+                margin: 0 0 20px;
+                position: relative;
+
+                /*Font*/
+                font-family: Georgia, serif;
+                font-size: 14px;
+                line-height: 1.2;
+                color: #666;
+
+                /*Box Shadow - (Optional)*/
+                -moz-box-shadow: 2px 2px 15px #ccc;
+                -webkit-box-shadow: 2px 2px 15px #ccc;
+                box-shadow: 2px 2px 15px #ccc;
+
+                /*Borders - (Optional)*/
+                border-left-style: solid;
+                border-left-width: 15px;
+                border-right-style: solid;
+                border-right-width: 2px;
+                }
+
+                blockquote::before{
+                content: \"\\201C\"; /*Unicode for Left Double Quote*/
+
+                /*Font*/
+                font-family: Georgia, serif;
+                font-size: 60px;
+                font-weight: bold;
+                color: #999;
+
+                /*Positioning*/
+                position: absolute;
+                left: 10px;
+                top:5px;
+
+                }
+
+                blockquote::after{
+                /*Reset to make sure*/
+                content: \"\";
+                }
+
+                blockquote a{
+                text-decoration: none;
+                background: #eee;
+                cursor: pointer;
+                padding: 0 3px;
+                color: #c76c0c;
+                }
+
+                blockquote a:hover{
+                color: #666;
+                }
+
+                blockquote em{
+                font-style: italic;
+                }
+
+                /*Default Color Palette*/
+                blockquote.default{
+                border-left-color: #656d77;
+                border-right-color: #434a53;
+                }
+
+                /*Grapefruit Color Palette*/
+                blockquote.grapefruit{
+                border-left-color: #ed5565;
+                border-right-color: #da4453;
+                }
+
+                /*Bittersweet Color Palette*/
+                blockquote.bittersweet{
+                border-left-color: #fc6d58;
+                border-right-color: #e95546;
+                }
+
+                /*Sunflower Color Palette*/
+                blockquote.sunflower{
+                border-left-color: #ffcd69;
+                border-right-color: #f6ba59;
+                }
+
+                /*Grass Color Palette*/
+                blockquote.grass{
+                border-left-color: #9fd477;
+                border-right-color: #8bc163;
+                }
+
+                /*Mint Color Palette*/
+                blockquote.mint{
+                border-left-color: #46cfb0;
+                border-right-color: #34bc9d;
+                }
+
+                /*Aqua Color Palette*/
+                blockquote.aqua{
+                border-left-color: #4fc2e5;
+                border-right-color: #3bb0d6;
+                }
+
+                /*Blue Jeans Color Palette*/
+                blockquote.bluejeans{
+                border-left-color: #5e9de6;
+                border-right-color: #4b8ad6;
+                }
+
+                /*Lavander Color Palette*/
+                blockquote.lavander{
+                border-left-color: #ad93e6;
+                border-right-color: #977bd5;
+                }
+
+                /*Pinkrose Color Palette*/
+                blockquote.pinkrose{
+                border-left-color: #ed87bd;
+                border-right-color: #d870a9;
+                }
+
+                /*Light Color Palette*/
+                blockquote.light{
+                border-left-color: #f5f7fa;
+                border-right-color: #e6e9ed;
+                }
+
+                /*Gray Color Palette*/
+                blockquote.gray{
+                border-left-color: #ccd1d8;
+                border-right-color: #aab2bc;
+                }
+                </style>
+                        ";
+
+        $colors = [
+            "default",
+            "grapefruit",
+            "bittersweet",
+            "sunflower",
+            "grass",
+            "mint",
+            "aqua",
+            "bluejeans",
+            "lavander",
+            "pinkrose",
+            "light",
+            "gray",
+        ];
+
+        $random = array_rand($colors, 1);
+        $color  = $colors[$random];
+
+        echo "<blockquote class=\"$color\">
+                <h1><span class=\"grapefruit\">" . $string . "</span></h1>
+                <p></p>
+                <code>
+                $additional_string
+                </code>
+                </blockquote>";
+
+        unset($colors);
+        unset($color);
+        unset($random);
     }
 
     private function getip()
