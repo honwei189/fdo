@@ -183,7 +183,7 @@ class FDOM
         // self::$data = self::call("get", [self::$_table, "*", $id]);
         // $o::$data = self::call("by_id", $id)->get();
         $o->data = self::call("by_id", $id)->get();
-        
+
         if (is_array($o->data) && count($o->data) > 0) {
             // pre(self::$parent_instance->fillable);
             // $o::set("fillable", ['dd']);
