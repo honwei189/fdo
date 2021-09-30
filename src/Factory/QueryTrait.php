@@ -1464,7 +1464,7 @@ trait QueryTrait
 
                 return $this->where($sql);
             } else {
-                $this->_where .= (str($this->_where) ? " or " : " ") . "trim(lower($column_name)) = '" . trim(strtolower($value)) . "'";
+                $this->_where .= (str($this->_where) ? " or " : " ") . "trim(lower($column_name)) = '" . trim(strtolower(".$this->filter_table_attribute($value.")) . "'";
             }
         }
 
@@ -1985,7 +1985,7 @@ trait QueryTrait
                         $rs->setFetchMode($mode); //FETCH_ROW
                     }
                 }
-                
+
                 if ($this->_set_encrypt_id) {
                     if ($mode == \PDO::FETCH_INTO || $mode == \PDO::FETCH_LAZY) {
                         $vars = null;
@@ -3076,7 +3076,7 @@ trait QueryTrait
                         if (is_int($k)) {
                             $v = trim($v);
                         } else {
-                            $sql_where[$k] = "$k = " . trim(preg_replace("/^(and)/si", "", (is_numeric($v) ? $v : "'$v'")));
+                            $sql_where[$k] = "$k = " . trim(preg_replace("/^(and)/si", "", (is_numeric($v) ? $v : $this->filter_table_attribute($v))));
                         }
                     }
                 }
@@ -3086,13 +3086,13 @@ trait QueryTrait
                         if (!str($v)) {
                             unset($sql_where[$k]);
                         } else {
-                            $sql_where[$k] = "$v = " . (is_numeric($value) ? $value : "'$value'");
+                            $sql_where[$k] = "$v = " . (is_numeric($value) ? $value : $this->filter_table_attribute($value));
                         }
                     } else {
                         if (!str($v)) {
                             unset($sql_where[$k]);
                         } else {
-                            $sql_where[$k] = trim(preg_replace("/^(and)/si", "", trim($v)));
+                            $sql_where[$k] = trim(preg_replace("/^(and)/si", "", trim($this->filter_table_attribute($v))));
                         }
                     }
                 }
@@ -3129,31 +3129,34 @@ trait QueryTrait
                 )) . ")";
             } else {
                 if (!is_array($value) && str($value)) {
-                    switch ($value) {
-                        case "now()":
-                        case "current_date":
-                        case "current_date()":
-                        case "current_timestamp":
-                        case "current_timestamp()":
-                        case "year(curdate())":
-                        case "month(curdate())":
-                            $this->_where .= ($str ? " and " : "") . "$sql_where = $value";
-                            break;
+                    $this->_where .= ($str ? " and " : "") . "$sql_where = " . $this->filter_table_attribute($value);
 
-                        default:
-                            if (stripos($value, "(case when") === false && (substr($value, 0, 1) != "(" && substr($value, 1, -1) != ")")) {
-                                $this->_where .= ($str ? " and " : "") . "$sql_where = " . (is_numeric($value) ? $value : "'$value'");
-                            } else {
-                                $this->_where .= ($str ? " and " : "") . "$sql_where = $value";
-                            }
-                            break;
-                    }
+                    // switch ($value) {
+                    //     case "now()":
+                    //     case "current_date":
+                    //     case "current_date()":
+                    //     case "current_timestamp":
+                    //     case "current_timestamp()":
+                    //     case "year(curdate())":
+                    //     case "month(curdate())":
+                    //         $this->_where .= ($str ? " and " : "") . "$sql_where = $value";
+                    //         break;
+
+                    //     default:
+                    //         if (stripos($value, "(case when") === false && (substr($value, 0, 1) != "(" && substr($value, 1, -1) != ")")) {
+                    //             $this->_where .= ($str ? " and " : "") . "$sql_where = " . (is_numeric($value) ? $value : "'$value'");
+                    //         } else {
+                    //             $this->_where .= ($str ? " and " : "") . "$sql_where = $value";
+                    //         }
+                    //         break;
+                    // }
 
                     // if ($value != "now()" && $value != "current_date" && $value != "current_timestamp" && $value != "year(curdate())" && $value != "month(curdate())" && stripos($value, "(case when") === false && (substr($value, 0, 1) != "(" && substr($value, 1, -1) != ")")) {
                     //     $this->_where .= ($str ? " and " : "") . "$sql_where = " . (is_numeric($value) ? $value : "'$value'");
                     // } else {
                     //     $this->_where .= ($str ? " and " : "") . "$sql_where = $value";
                     // }
+
                 } else {
                     if (!str($value)) {
                         if (str($sql_where)) {
