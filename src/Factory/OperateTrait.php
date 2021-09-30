@@ -375,33 +375,37 @@ trait OperateTrait
                 $keys = array_keys($this->_vars);
                 $raws = $this->_vars;
 
-                foreach ($this->_vars as $k => $v) {
-                    if (str($v)) {
-                        if ($v != "now()" && $v != "current_date" && $v != "current_timestamp" && $v != "year(curdate())" && $v != "month(curdate())" && stripos($v, "(case when") === false && (substr($v, 0, 1) != "(" && substr($v, 1, -1) != ")")) {
+                // foreach ($this->_vars as $k => $v) {
+                //     if (str($v)) {
+                //         if ($v != "now()" && $v != "current_date" && $v != "current_timestamp" && $v != "year(curdate())" && $v != "month(curdate())" && stripos($v, "(case when") === false && (substr($v, 0, 1) != "(" && substr($v, 1, -1) != ")")) {
 
-                            if (substr($v, 0, 1) == "(" && substr($v, 1, -1) == ")" && strpos($v, "+") !== false) {
-                                $this->_vars[$k] = "$v";
-                            } else {
-                                if ($v !== "''") {
-                                    $this->_vars[$k] = "'$v'";
-                                    $this->_vars[$k] = str_replace("''", "'", $this->_vars[$k]);
-                                } else {
-                                    $this->_vars[$k] = "$v";
-                                }
-                            }
-                        } else {
-                            $this->_vars[$k] = "$v";
-                        }
-                    } else {
-                        if (is_numeric($v) || is_bool($v)) {
-                            $this->_vars[$k] = $v;
-                        } else {
-                            $this->_vars[$k] = "null";
-                        }
-                    }
-                }
+                //             if (substr($v, 0, 1) == "(" && substr($v, 1, -1) == ")" && strpos($v, "+") !== false) {
+                //                 $this->_vars[$k] = "$v";
+                //             } else {
+                //                 if ($v !== "''") {
+                //                     $this->_vars[$k] = "'$v'";
+                //                     $this->_vars[$k] = str_replace("''", "'", $this->_vars[$k]);
+                //                 } else {
+                //                     $this->_vars[$k] = "$v";
+                //                 }
+                //             }
+                //         } else {
+                //             $this->_vars[$k] = "$v";
+                //         }
+                //     } else {
+                //         if (is_numeric($v) || is_bool($v)) {
+                //             $this->_vars[$k] = $v;
+                //         } else {
+                //             $this->_vars[$k] = "null";
+                //         }
+                //     }
+                // }
+
+                $this->build_store_attributes("insert");
 
                 $sql = "insert into " . $this->_table . " (" . join(", ", $keys) . ") values (" . join(", ", $this->_vars) . ");";
+
+                // unset($attrs);
             } else {
                 unset($this->{"crdate"});
                 unset($this->{"createdate"});
@@ -426,39 +430,42 @@ trait OperateTrait
                 $keys = array_keys($this->_vars);
                 $raws = $this->_vars;
 
-                foreach ($this->_vars as $k => $v) {
-                    if (str($v)) {
-                        if ($v != "now()" && $v != "current_date" && $v != "current_timestamp" && $v != "year(curdate())" && $v != "month(curdate())" && stripos($v, "(case when") === false && (substr($v, 0, 1) != "(" && substr($v, 1, -1) != ")")) {
+                // foreach ($this->_vars as $k => $v) {
+                //     if (str($v)) {
+                //         if ($v != "now()" && $v != "current_date" && $v != "current_timestamp" && $v != "year(curdate())" && $v != "month(curdate())" && stripos($v, "(case when") === false && (substr($v, 0, 1) != "(" && substr($v, 1, -1) != ")")) {
 
-                            if (substr($v, 0, 1) == "(" && substr($v, 1, -1) == ")" && strpos($v, "+") !== false) {
-                                $this->_vars[$k] = "$k = $v";
-                            } else {
-                                if (preg_match("/^\(select(.*)\)/si", $v)) {
-                                    $this->_vars[$k] = "$k = $v";
-                                } else {
-                                    if ($v !== "''") {
-                                        $this->_vars[$k] = "$k = '$v'";
-                                        $this->_vars[$k] = str_replace("''", "'", $this->_vars[$k]);
-                                    } else {
-                                        $this->_vars[$k] = "$k = $v";
-                                    }
-                                }
-                            }
-                        } else {
-                            $this->_vars[$k] = "$k = $v";
-                        }
-                    } else {
-                        if (is_numeric($v) || is_bool($v)) {
-                            $this->_vars[$k] = "$k = $v";
-                        } else {
-                            $this->_vars[$k] = "$k = null";
-                        }
-                    }
-                }
+                //             if (substr($v, 0, 1) == "(" && substr($v, 1, -1) == ")" && strpos($v, "+") !== false) {
+                //                 $this->_vars[$k] = "$k = $v";
+                //             } else {
+                //                 if (preg_match("/^\(select(.*)\)/si", $v)) {
+                //                     $this->_vars[$k] = "$k = $v";
+                //                 } else {
+                //                     if ($v !== "''") {
+                //                         $this->_vars[$k] = "$k = '$v'";
+                //                         $this->_vars[$k] = str_replace("''", "'", $this->_vars[$k]);
+                //                     } else {
+                //                         $this->_vars[$k] = "$k = $v";
+                //                     }
+                //                 }
+                //             }
+                //         } else {
+                //             $this->_vars[$k] = "$k = $v";
+                //         }
+                //     } else {
+                //         if (is_numeric($v) || is_bool($v)) {
+                //             $this->_vars[$k] = "$k = $v";
+                //         } else {
+                //             $this->_vars[$k] = "$k = null";
+                //         }
+                //     }
+                // }
 
                 // $sql = "SET @uuid := 0; update $this->_table set " . join(", ", $this->_vars) . ", id = (SELECT @uuid := id) where " . $sql_where;
 
                 // $sql = "update $this->_table set " . join(", ", $this->_vars) . ", id = (SELECT @uuid := id) where " . $sql_where;
+
+                $this->build_store_attributes("update");
+
                 $sql = "update $this->_table set " . join(", ", $this->_vars) . ", id = LAST_INSERT_ID(id) where " . $sql_where;
             }
 
@@ -643,30 +650,33 @@ trait OperateTrait
             unset($this->{"updated_at"});
             unset($this->{"updated_by"});
 
-            foreach ($this->_vars as $k => $v) {
-                if (str($v)) {
-                    if ($v != "now()" && $v != "current_date" && $v != "current_timestamp" && $v != "year(curdate())" && $v != "month(curdate())" && stripos($v, "(case when") === false && (substr($v, 0, 1) != "(" && substr($v, 1, -1) != ")")) {
-                        if (strpos($v, "(") !== false && strpos($v, ")") !== false && strpos($v, "+") !== false) {
-                            $this->_vars[$k] = "$v";
-                        } else {
-                            if ($v !== "''") {
-                                $this->_vars[$k] = "'$v'";
-                                $this->_vars[$k] = str_replace("''", "'", $this->_vars[$k]);
-                            } else {
-                                $this->_vars[$k] = "$v";
-                            }
-                        }
-                    } else {
-                        $this->_vars[$k] = "$v";
-                    }
-                } else {
-                    if (is_numeric($v) || is_bool($v)) {
-                        $this->_vars[$k] = $v;
-                    } else {
-                        $this->_vars[$k] = "null";
-                    }
-                }
-            }
+            // foreach ($this->_vars as $k => $v) {
+            //     if (str($v)) {
+            //         if ($v != "now()" && $v != "current_date" && $v != "current_timestamp" && $v != "year(curdate())" && $v != "month(curdate())" && stripos($v, "(case when") === false && (substr($v, 0, 1) != "(" && substr($v, 1, -1) != ")")) {
+            //             if (strpos($v, "(") !== false && strpos($v, ")") !== false && strpos($v, "+") !== false) {
+            //                 $this->_vars[$k] = "$v";
+            //             } else {
+            //                 if ($v !== "''") {
+            //                     $this->_vars[$k] = "'$v'";
+            //                     $this->_vars[$k] = str_replace("''", "'", $this->_vars[$k]);
+            //                 } else {
+            //                     $this->_vars[$k] = "$v";
+            //                 }
+            //             }
+            //         } else {
+            //             $this->_vars[$k] = "$v";
+            //         }
+            //     } else {
+            //         if (is_numeric($v) || is_bool($v)) {
+            //             $this->_vars[$k] = $v;
+            //         } else {
+            //             $this->_vars[$k] = "null";
+            //         }
+            //     }
+            // }
+
+            $this->build_store_attributes("insert");
+
 
             if (!is_array($this->_raws)) {
                 $this->_raws = &$raws;
@@ -853,35 +863,37 @@ trait OperateTrait
             unset($this->{"fillable"});
             unset($this->_vars['fillable']);
 
-            foreach ($this->_vars as $k => $v) {
-                if (str($v)) {
-                    if ($v != "now()" && $v != "current_date" && $v != "current_timestamp" && $v != "year(curdate())" && $v != "month(curdate())" && stripos($v, "(case when") === false && (substr($v, 0, 1) != "(" && substr($v, 1, -1) != ")")) {
-                        if (strpos($v, "(") !== false && strpos($v, ")") !== false && strpos($v, "+") !== false) {
-                            $this->_vars[$k] = "$k = $v";
-                        } else {
-                            if (preg_match("/^\(select(.*)\)/si", $v)) {
-                                $this->_vars[$k] = "$k = $v";
-                            } else {
-                                if ($v !== "''") {
-                                    $this->_vars[$k] = "$k = '$v'";
-                                    $this->_vars[$k] = str_replace("''", "'", $this->_vars[$k]);
-                                } else {
-                                    $this->_vars[$k] = "$k = $v";
-                                }
-                            }
-                        }
-                    } else {
-                        $this->_vars[$k] = "$k = $v";
-                    }
-                } else {
-                    if (is_numeric($v) || is_bool($v)) {
-                        $this->_vars[$k] = "$k = $v";
-                    } else {
-                        $this->_vars[$k] = "$k = null";
-                    }
-                }
-            }
+            // foreach ($this->_vars as $k => $v) {
+            //     if (str($v)) {
+            //         if ($v != "now()" && $v != "current_date" && $v != "current_timestamp" && $v != "year(curdate())" && $v != "month(curdate())" && stripos($v, "(case when") === false && (substr($v, 0, 1) != "(" && substr($v, 1, -1) != ")")) {
+            //             if (strpos($v, "(") !== false && strpos($v, ")") !== false && strpos($v, "+") !== false) {
+            //                 $this->_vars[$k] = "$k = $v";
+            //             } else {
+            //                 if (preg_match("/^\(select(.*)\)/si", $v)) {
+            //                     $this->_vars[$k] = "$k = $v";
+            //                 } else {
+            //                     if ($v !== "''") {
+            //                         $this->_vars[$k] = "$k = '$v'";
+            //                         $this->_vars[$k] = str_replace("''", "'", $this->_vars[$k]);
+            //                     } else {
+            //                         $this->_vars[$k] = "$k = $v";
+            //                     }
+            //                 }
+            //             }
+            //         } else {
+            //             $this->_vars[$k] = "$k = $v";
+            //         }
+            //     } else {
+            //         if (is_numeric($v) || is_bool($v)) {
+            //             $this->_vars[$k] = "$k = $v";
+            //         } else {
+            //             $this->_vars[$k] = "$k = null";
+            //         }
+            //     }
+            // }
 
+            $this->build_store_attributes("update");
+            
             if ($this->_id > 0) {
                 $sql = "update $this->_table set " . join(", ", $this->_vars) . " where " . $sql_where;
             } else {
@@ -1001,4 +1013,76 @@ trait OperateTrait
     }
 
     #################################################### Private ###############################################
+
+    private function build_store_attributes($action)
+    {
+        foreach ($this->_vars as $k => $v) {
+            $this->_vars[$k] = ($action == "update" ? "$k = " : "") . $this->filter_table_attribute($v);
+
+            // if (str($v)) {
+            //     // $value = $v;
+            //     // if (stripos($v, "(case when") === false && (substr($v, 0, 1) != "(" && substr($v, 1, -1) != ")")) {
+            //     //     $value = "special prefix bracket";
+            //     // }
+
+            //     switch ($v) {
+            //         // case "now()":
+            //         // case "current_date":
+            //         // case "current_date()":
+            //         // case "current_timestamp":
+            //         // case "current_timestamp()":
+            //         // case "year(curdate())":
+            //         // case "month(curdate())":
+            //         // case "''":
+            //         // // case (preg_match('/\s*\((^|\s|\b)(?!case\s\S)(.*?)\)\s*+/siU', $v) ? true : false):
+            //         case (preg_match('/\s*\((^|\s|\b)(case when\s\S)(.*?)\)\s*+/siU', $v) ? true : false):
+            //         case (preg_match("/^\(\w+\)($|\b)|(\w+)\(\)|^\w+\((?!case\s\S)(.*?)\)$/isU", $v) ? true : false):
+            //             // case (preg_match("/^\(\w+\)($|\b)|(\w+)\(\)/isU", $v) ? true : false):
+            //             // case (preg_match('/(adddate|addtime|convert_tz|date_add|date_format|date_diff|date_sub|day|dayname|dayofmonth|dayofweek|dayofyear|extract|from_days|from_unixtime|get_format|hour|last_day|makedate|maketime|microsecond|minute|month|monthname|period_add|period_diff|quarter|sec_to_time|second|str_to_date|subdate|subtime|time|time_format|time_to_sec|timediff|timestamp|timestampadd|timestampdiff|to_days|to_seconds|unix_timestamp|utc_date|utc_time|utc_timestamp|week|yearweek|weekday|weekofyear|year|yearweek)\((.?)\)($|\s|\b)/siU', $v) ? true : false):
+            //             // case (preg_match('/\s*\((^|\s|\b)(?!case\s\S)(.*?)\)\s*+/siU', $v) ? true : false):
+            //             // case (preg_match("/(?:(?:^(?!.*\bcase\b)|\G(?!\A)).*?)\K\b(?:\(|\))\b/gm", $v, $reg) ? true : false):
+
+            //             // if (substr($v, 0, 1) == "(" && substr($v, 1, -1) == ")" && strpos($v, "+") !== false) {
+            //             //     $this->_vars[$k] = ($action == "update" ? "$k = " : "") . "$v";
+            //             // } else {
+            //             //     if ($v !== "''") {
+            //             //         $this->_vars[$k] = ($action == "update" ? "$k = " : "") . "'$v'";
+            //             //         $this->_vars[$k] = str_replace("''", "'", $this->_vars[$k]);
+            //             //     } else {
+            //             //         $this->_vars[$k] = ($action == "update" ? "$k = " : "") . "$v";
+            //             //     }
+            //             // }
+
+            //             $this->_vars[$k] = ($action == "update" ? "$k = " : "") . "$v";
+            //             break;
+
+            //         default:
+            //             $this->_vars[$k] = ($action == "update" ? "$k = " : "") . ($v == "''" ? "''" : "$v");
+            //             break;
+            //     }
+
+            //     // if ($v != "now()" && $v != "current_date" && $v != "current_timestamp" && $v != "year(curdate())" && $v != "month(curdate())" && stripos($v, "(case when") === false && (substr($v, 0, 1) != "(" && substr($v, 1, -1) != ")")) {
+
+            //     //     if (substr($v, 0, 1) == "(" && substr($v, 1, -1) == ")" && strpos($v, "+") !== false) {
+            //     //         $this->_vars[$k] = "$v";
+            //     //     } else {
+            //     //         if ($v !== "''") {
+            //     //             $this->_vars[$k] = "'$v'";
+            //     //             $this->_vars[$k] = str_replace("''", "'", $this->_vars[$k]);
+            //     //         } else {
+            //     //             $this->_vars[$k] = "$v";
+            //     //         }
+            //     //     }
+            //     // } else {
+            //     //     $this->_vars[$k] = "$v";
+            //     // }
+            // } else {
+            //     if (is_numeric($v) || is_bool($v)) {
+            //         $this->_vars[$k] = ($action == "update" ? "$k = " : "") . $v;
+            //     } else {
+            //         $this->_vars[$k] = ($action == "update" ? "$k = " : "") . "null";
+            //     }
+            // }
+        }
+    }
 }
