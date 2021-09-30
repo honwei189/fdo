@@ -1624,6 +1624,70 @@ class SQL
         unset($sql);
     }
 
+    /**
+     * Determine the attribute whether is mySQL function or string
+     *
+     * @param string $attr
+     * @return string
+     */
+    private function filter_table_attribute($attr)
+    {
+        if (str($attr)) {
+            switch ($attr) {
+                // case "now()":
+                // case "current_date":
+                // case "current_date()":
+                // case "current_timestamp":
+                // case "current_timestamp()":
+                // case "year(curdate())":
+                // case "month(curdate())":
+                // case "''":
+                // // case (preg_match('/\s*\((^|\s|\b)(?!case\s\S)(.*?)\)\s*+/siU', $attr) ? true : false):
+                case (preg_match('/\s*\((^|\s|\b)(case when\s\S)(.*?)\)\s*+/siU', $attr) ? true : false):
+                // case (preg_match("/^\(\w+\)($|\b)|(\w+)\(\)|^\w+\((?!case\s\S)(.*?)\)$/isU", $attr) ? true : false):
+                case (preg_match("/^\(\S.*\)($|\b)|(\w+)\(\)|^\w+\((?!case\s\S)(.*?)\)$/isU", $attr) ? true : false):
+                    // case (preg_match("/^\(\w+\)($|\b)|(\w+)\(\)/isU", $attr) ? true : false):
+                    // case (preg_match('/(adddate|addtime|convert_tz|date_add|date_format|date_diff|date_sub|day|dayname|dayofmonth|dayofweek|dayofyear|extract|from_days|from_unixtime|get_format|hour|last_day|makedate|maketime|microsecond|minute|month|monthname|period_add|period_diff|quarter|sec_to_time|second|str_to_date|subdate|subtime|time|time_format|time_to_sec|timediff|timestamp|timestampadd|timestampdiff|to_days|to_seconds|unix_timestamp|utc_date|utc_time|utc_timestamp|week|yearweek|weekday|weekofyear|year|yearweek)\((.?)\)($|\s|\b)/siU', $attr) ? true : false):
+                    // case (preg_match('/\s*\((^|\s|\b)(?!case\s\S)(.*?)\)\s*+/siU', $attr) ? true : false):
+                    // case (preg_match("/(?:(?:^(?!.*\bcase\b)|\G(?!\A)).*?)\K\b(?:\(|\))\b/gm", $attr, $reg) ? true : false):
+                    return $attr;
+                    break;
+
+                default:
+                    return ($attr == "''" ? "''" : "'$attr'");
+                    break;
+            }
+
+            // if ($v != "now()" && $v != "current_date" && $v != "current_timestamp" && $v != "year(curdate())" && $v != "month(curdate())" && stripos($v, "(case when") === false && (substr($v, 0, 1) != "(" && substr($v, 1, -1) != ")")) {
+
+            //     if (substr($v, 0, 1) == "(" && substr($v, 1, -1) == ")" && strpos($v, "+") !== false) {
+            //         $this->_vars[$k] = "$v";
+            //     } else {
+            //         if ($v !== "''") {
+            //             $this->_vars[$k] = "'$v'";
+            //             $this->_vars[$k] = str_replace("''", "'", $this->_vars[$k]);
+            //         } else {
+            //             $this->_vars[$k] = "$v";
+            //         }
+            //     }
+            // } else {
+            //     $this->_vars[$k] = "$v";
+            // }
+        } else {
+            if (is_numeric($attr) || is_bool($attr)) {
+                return $attr;
+            } else {
+                return "null";
+            }
+        }
+    }
+
+    /**
+     * Generate HTML5 view
+     *
+     * @param mixed $string
+     * @param mixed $additional_string
+     */
     private function throwout_html($string, $additional_string = null)
     {
         echo "<style>
