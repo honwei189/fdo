@@ -1445,7 +1445,7 @@ trait QueryTrait
         if (is_array($column_name)) {
             $_ = [];
             foreach ($column_name as $k => $v) {
-                $_[] = "trim(lower($v)) = '" . trim(strtolower($value)) . "'";
+                $_[] = "trim(lower($v)) = " . $this->$this->process_data_attribute(strtolower($value));
             }
 
             $sql = "(" . join(" or ", $_) . ")";
@@ -1456,7 +1456,7 @@ trait QueryTrait
             if (is_array($value)) {
                 $_ = [];
                 foreach ($value as $k => $v) {
-                    $_[] = "trim(lower($column_name)) = " . trim(strtolower($this->process_data_attribute($v)));
+                    $_[] = "trim(lower($column_name)) = " . $this->$this->process_data_attribute(strtolower($v));
                 }
 
                 $sql = "(" . join(" or ", $_) . ")";
@@ -1464,7 +1464,7 @@ trait QueryTrait
 
                 return $this->where($sql);
             } else {
-                $this->_where .= (str($this->_where) ? " or " : " ") . "trim(lower($column_name)) = " . trim(strtolower($this->process_data_attribute($value)));
+                $this->_where .= (str($this->_where) ? " or " : " ") . "trim(lower($column_name)) = " . $this->$this->process_data_attribute(strtolower($value));
             }
         }
 
@@ -3086,7 +3086,7 @@ trait QueryTrait
                         if (!str($v)) {
                             unset($sql_where[$k]);
                         } else {
-                            $sql_where[$k] = "$v = " . (is_numeric($value) ? $value : $this->process_data_attribute($value));
+                            $sql_where[$k] = "$v = " . $this->process_data_attribute($value);
                         }
                     } else {
                         if (!str($v)) {
