@@ -677,7 +677,6 @@ trait OperateTrait
 
             $this->build_store_attributes("insert");
 
-
             if (!is_array($this->_raws)) {
                 $this->_raws = &$raws;
             }
@@ -893,7 +892,7 @@ trait OperateTrait
             // }
 
             $this->build_store_attributes("update");
-            
+
             if ($this->_id > 0) {
                 $sql = "update $this->_table set " . join(", ", $this->_vars) . " where " . $sql_where;
             } else {
@@ -905,15 +904,26 @@ trait OperateTrait
                 return $sql;
             }
 
+            $sql_print = "";
+            $max_len   = max(array_map('strlen', array_keys($raws)));
+
+            foreach ($raws as $k => $v) {
+                if ($this->_is_api && $this->_is_cli) {
+                    $sql_print .= "$k : $v" . PHP_EOL;
+                } else {
+                    $sql_print .= $k . str_repeat("&nbsp;", $max_len - strlen($k)) . " : " . $v . "<br><hr style=\"padding-top: 5px; border:0px; border-top: 1px solid #dddbdb;\">";
+                }
+            }
+
             if ($this->_passthrough) {
                 if ($this->_debug_print) {
-                    $this->print_sql_format($sql);
+                    $this->print_sql_format($sql, str_replace(",", ",<br>", $sql_print));
                 }
 
                 $stat = 1;
             } else {
                 if ($this->_debug_print) {
-                    $this->print_sql_format($sql);
+                    $this->print_sql_format($sql, str_replace(",", ",<br>", $sql_print));
                     $stat = 1;
                     if (!$this->_soft_update) {
                         exit;
@@ -929,7 +939,7 @@ trait OperateTrait
                     }
 
                     if ($this->_show_sql) {
-                        $this->print_sql_format($sql);
+                        $this->print_sql_format($sql, str_replace(",", ",<br>", $sql_print));
                     }
 
                     $this->update_sql($sql);
@@ -969,6 +979,7 @@ trait OperateTrait
 
             unset($keys);
             unset($raws);
+            unset($sql_print);
             $this->_vars                   = null;
             $this->_raws                   = null;
             $this->_where                  = "";
@@ -1017,7 +1028,7 @@ trait OperateTrait
     private function build_store_attributes($action)
     {
         foreach ($this->_vars as $k => $v) {
-            $this->_vars[$k] = ($action == "update" ? "$k = " : "") . $this->filter_table_attribute($v);
+            $this->_vars[$k] = ($action == "update" ? "$k = " : "") . $this->process_data_attribute($v);
 
             // if (str($v)) {
             //     // $value = $v;
