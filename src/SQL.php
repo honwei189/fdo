@@ -1625,15 +1625,15 @@ class SQL
     }
 
     /**
-     * Determine the attribute whether is mySQL function or string
+     * Before store to database / select data with selected table columns from database, determine the attribute whether is mySQL function, mySQL operates or string / numbers / boolean
      *
      * @param string $attr
      * @return string
      */
-    private function filter_table_attribute($attr)
+    private function process_data_attribute($attr)
     {
-        if (str($attr)) {
-            switch ($attr) {
+        if (str($attr) && is_string($attr)) {
+            switch (trim($attr)) {
                 // case "now()":
                 // case "current_date":
                 // case "current_date()":
@@ -1643,18 +1643,26 @@ class SQL
                 // case "month(curdate())":
                 // case "''":
                 // // case (preg_match('/\s*\((^|\s|\b)(?!case\s\S)(.*?)\)\s*+/siU', $attr) ? true : false):
-                case (preg_match('/\s*\((^|\s|\b)(case when\s\S)(.*?)\)\s*+/siU', $attr) ? true : false):
+                case (preg_match('/\s*\((^|\s|\b)(case when\s\S)(.*?)\)\s*+/siU', $attr) ? true : false): // check the string is "case when"
                 // case (preg_match("/^\(\w+\)($|\b)|(\w+)\(\)|^\w+\((?!case\s\S)(.*?)\)$/isU", $attr) ? true : false):
-                case (preg_match("/^\(\S.*\)($|\b)|(\w+)\(\)|^\w+\((?!case\s\S)(.*?)\)$/isU", $attr) ? true : false):
+                case (preg_match("/^\(\S.*\)($|\b)|(\w+)\(\)|^\w+\((?!case\s\S)(.*?)\)$/isU", $attr) ? true : false): //Check FUNCTION(), FUNCTION(table_field, value), operator -- (1 + 2) or string contains "(" and ")"
                     // case (preg_match("/^\(\w+\)($|\b)|(\w+)\(\)/isU", $attr) ? true : false):
                     // case (preg_match('/(adddate|addtime|convert_tz|date_add|date_format|date_diff|date_sub|day|dayname|dayofmonth|dayofweek|dayofyear|extract|from_days|from_unixtime|get_format|hour|last_day|makedate|maketime|microsecond|minute|month|monthname|period_add|period_diff|quarter|sec_to_time|second|str_to_date|subdate|subtime|time|time_format|time_to_sec|timediff|timestamp|timestampadd|timestampdiff|to_days|to_seconds|unix_timestamp|utc_date|utc_time|utc_timestamp|week|yearweek|weekday|weekofyear|year|yearweek)\((.?)\)($|\s|\b)/siU', $attr) ? true : false):
                     // case (preg_match('/\s*\((^|\s|\b)(?!case\s\S)(.*?)\)\s*+/siU', $attr) ? true : false):
                     // case (preg_match("/(?:(?:^(?!.*\bcase\b)|\G(?!\A)).*?)\K\b(?:\(|\))\b/gm", $attr, $reg) ? true : false):
-                    return $attr;
+                    return trim($attr);
+                    break;
+
+                case (substr($attr, 0, 1) == "'" && substr($attr, -1, 1) == "'" ? true : false): // Check the string begin and end has single quotes "'"
+                    return "'" . trim(addslashes(substr($attr, 1, -1))) . "'";
+                    break;
+
+                case "''":
+                    return trim($attr);
                     break;
 
                 default:
-                    return ($attr == "''" ? "''" : "'$attr'");
+                    return trim("'" . addslashes($attr) . "'");
                     break;
             }
 
@@ -1674,8 +1682,8 @@ class SQL
             //     $this->_vars[$k] = "$v";
             // }
         } else {
-            if (is_numeric($attr) || is_bool($attr)) {
-                return $attr;
+            if (is_numeric($attr) || is_float($attr) || is_bool($attr)) {
+                return trim($attr);
             } else {
                 return "null";
             }
