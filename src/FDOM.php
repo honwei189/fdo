@@ -49,8 +49,10 @@ class FDOM
     private static $instance        = null;
     private static $parent_instance = null;
     private static $rc;
+    // private $_methods = [];
     protected static $_fillable;
     protected static $_table;
+    protected $attributes;
     protected $data;
     protected $id;
 
@@ -61,6 +63,23 @@ class FDOM
 
     public function __call($name, $arguments)
     {
+        // if ($name == "creates"){
+        //     var_dump($arguments[1]);
+
+        //     if ($arguments[1] instanceof \Closure) {
+
+        //     }
+        //     return $this->_methods[$arguments[0]] = $arguments[1];
+        // }
+
+        if (isset($this->_methods[$name])) {
+            return $this->_methods[$name];
+        }
+
+        if ($this->$name ?? false) {
+            return $this->$name;
+        }
+
         self::get_table();
         return self::call($name, $arguments);
     }
@@ -79,6 +98,28 @@ class FDOM
     public function __set($name, $val)
     {
         self::call("__set", [$name, $val]);
+    }
+
+    public function creates($name, \Closure $closure)
+    {
+        // if (!$this->_methods ?? false){
+        //     $this->_methods = [];
+        // }
+        // $this->_methods[$name] = $closure->__invoke();
+        $this->$name = $closure->__invoke();
+
+        // if (is_null($this->_methods[$name])) {
+        if (is_null($this->$name)) {
+            ob_start();
+            // $this->_methods[$name];
+            $closure->__invoke();
+            $output = ob_get_contents();
+            ob_end_clean();
+
+            // $this->_methods[$name] = $output;
+            $this->$name = $output;
+            return;
+        }
     }
 
     /**
@@ -197,6 +238,16 @@ class FDOM
         }
 
         return false;
+    }
+
+    public static function latest()
+    {
+        self::get_table();
+
+        // return ( new static )::call("where", ["is_active", "1"])->fetch_mode(\PDO::FETCH_INTO, static::class)->order_by("id", "desc");
+        return ( new static )::call("where", ["is_active", "1"])->fetch_mode(\PDO::FETCH_INTO)->order_by("id", "desc");
+
+        // return ( new static )::call("where", ["is_active", "1"])->fetch_mode(\PDO::FETCH_CLASS)->order_by("id", "desc");
     }
 
     /**

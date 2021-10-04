@@ -33,6 +33,7 @@ class SQL
 {
     public $action_description = null;
     public $action_type        = null;
+    public $disable_laravel    = true;
     public $error              = null;
     public $fetch_mode         = null;
     public $instance           = null;
@@ -771,6 +772,19 @@ class SQL
         }
     }
 
+    /**
+     * Disable certain function using laravel eloquent's coding language while FDO been installed into Laravel project
+     *
+     * @param bool $bool
+     * @return FDO
+     */
+    public function disable_laravel(bool $bool = true)
+    {
+        $this->disable_laravel = $bool;
+
+        return $this;
+    }
+
     public function error($rs, $additional_string = "")
     {
         if (is_object($rs)) {
@@ -1194,6 +1208,19 @@ class SQL
     public function table($table_name, $alias_name = null)
     {
         return $this->set_table($table_name, $alias_name);
+    }
+
+    /**
+     * Certain function using laravel eloquent's coding language while FDO been installed into Laravel project
+     *
+     * @param bool $bool
+     * @return FDO
+     */
+    public function use_laravel(bool $bool = true)
+    {
+        $this->disable_laravel = !$bool;
+
+        return $this;
     }
 
     /**
