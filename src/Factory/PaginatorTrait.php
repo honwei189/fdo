@@ -54,7 +54,7 @@ trait PaginatorTrait
     {
         // $col       = "";
         $total     = 0;
-        $nums_data = 0;
+        // $nums_data = 0;
 
         // if (strpos($this->sql, "Select SQL_CALC_FOUND_ROWS") !== false) {
         //     $rows_resources = $this->instance->query("SELECT FOUND_ROWS() As count");
