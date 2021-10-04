@@ -4,7 +4,7 @@
  * ---------
  * Created       : 2021-09-12 08:29:12 pm
  * Author        : Gordon Lim
- * Last Modified : 2021-09-13 08:11:48 pm
+ * Last Modified : 2021-10-04 09:15:40 pm
  * Modified By   : Gordon Lim
  * ---------
  * Changelog
@@ -30,5 +30,45 @@ namespace honwei189\FDO;
  */
 class fdoData
 {
+    public function __call($name, $arguments)
+    {
+        if ($this->$name ?? false) {
+            return $this->$name;
+        }
+    }
 
+    public function __get($name)
+    {
+        return $this->$name ?? "";
+    }
+
+    public function __set($name, $val)
+    {
+        // if (is_callable($val)) {
+        //     $closure = \Closure::bind($val, $this);
+        //     return call_user_func($closure);
+        // }
+        $this->$name = $val;
+    }
+
+    public function creates($name, \Closure $closure)
+    {
+        $this->$name = $closure->__invoke();
+
+        // if (is_null($this->$name)) {
+        //     ob_start();
+        //     // $this->_methods[$name];
+        //     $closure->__invoke();
+        //     $output = ob_get_contents();
+        //     ob_end_clean();
+
+        //     // $this->_methods[$name] = $output;
+        //     $this->$name = $output;
+        //     return;
+        // }
+
+        $closure = $closure->bindTo($this);
+
+        return call_user_func($closure);
+    }
 }
