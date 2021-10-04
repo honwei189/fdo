@@ -369,7 +369,42 @@ trait QueryTrait
     }
 
     /**
-     * Set PDO fetch mode
+     * Set PDO fetch mode.
+     *
+     * Default is FETCH_ASSOC which is much faster than others
+     *
+     * FETCH_LAZY is much faster if fetching mass data from database
+     *
+     * Reference data :
+     * ----------------
+     *
+     * PDO::FETCH_ASSOC - 936 ms
+     * PDO::FETCH_BOTH - 948 ms
+     * PDO::FETCH_NUM - 1,184 ms
+     * PDO::FETCH_OBJ - 1,272 ms
+     * PDO::FETCH_LAZY - 1,276 ms
+     *
+     * [Assoc] => 2.71533203125
+     * [Both] => 3.043701171875
+     * [Obj] => 3.574951171875
+     * [Class] => 4.39404296875
+     * [Num] => 17.519287109375
+     * [Lazy] => 1196.4636230469
+     *
+     *
+     * Fetching mass data:
+     * PDO::FETCH_LAZY - 5,490 ms
+     * PDO::FETCH_NUM - 8,818 ms
+     * PDO::FETCH_ASSOC- 10,220 ms
+     * PDO::FETCH_BOTH - 11,359 ms
+     * PDO::FETCH_OBJ - 14,027 ms
+     *
+     * [Lazy] => 88.43896484375
+     * [Num] => 281.11694335938
+     * [Assoc] => 310.59375
+     * [Class] => 384.8310546875
+     * [Obj] => 395.36401367188
+     * [Both] => 411.62109375
      *
      * @param string $mode Default is FETCH_ASSOC
      * @param string $class_name Default is fdoData.  You can use your custom class to fetch data from DB save into your class
@@ -381,10 +416,25 @@ trait QueryTrait
         //     $rs->setFetchMode($mode, $class_name);
         // }
 
-        if ($mode == \PDO::FETCH_LAZY || $mode == \PDO::FETCH_OBJ || $mode == \PDO::FETCH_INTO) {
-            $this->fetch_mode = (object) ["mode" => $mode, "class" => $class_name];
-        } else {
-            $this->fetch_mode = (object) ["mode" => $mode, "class" => null];
+        switch ($mode) {
+            case \PDO::FETCH_CLASS:
+            case \PDO::FETCH_LAZY:
+            case \PDO::FETCH_OBJ:
+            case \PDO::FETCH_INTO:
+                if ($mode == \PDO::FETCH_CLASS) {
+                    // $mode = \PDO::FETCH_CLASS | \PDO::FETCH_CLASSTYPE;
+                    // $mode = \PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE;
+                    // $mode = \PDO::FETCH_CLASS | \PDO::FETCH_UNIQUE;
+                }
+
+                $this->fetch_mode = (object) ["mode" => $mode, "class" => $class_name, "argument" => []];
+
+                break;
+
+            default:
+                $this->fetch_mode = (object) ["mode" => $mode, "class" => null, "arguments" => null];
+
+                break;
         }
 
         return $this;
@@ -1598,6 +1648,72 @@ trait QueryTrait
         $this->_passthrough = (bool) $bool;
     }
 
+    public function paginate($rows = 20, $from = 0)
+    {
+        $sort = false;
+        if (str($this->_order_by)) {
+            $sort = true;
+        }
+
+        if (!class_exists("Facade\\Ignition\\Support\\LaravelVersion")) {
+            return $this->limit($rows, $from)->find();
+        } else {
+            if ($this->disable_laravel) {
+                // $o = (new $this->parent);
+                // $o->data = $this->limit($rows, $from)->find();
+
+                // $o->creates("links", function () use ($o) {
+                //     return $this->pagination();
+                // });
+
+                // $a = $this;
+
+                $o       = new \honwei189\FDO\fdoData;
+                $o->data = $this->limit($rows, $from)->find();
+                // $o->links = function(){
+                //     return $this->pagination();
+                //     // return $a->pagination();
+                // };
+                $o->creates("links", function () {
+                    return $this->pagination();
+                    // return $a->pagination();
+                });
+
+                return $o;
+
+                // return $this->limit($rows, $from)->find();
+            }
+        }
+
+        $data  = $this->find();
+        $items = array();
+        foreach ($data as $thread) {
+            array_push($items, (object) $thread);
+        }
+
+        $currentPage = ("\Illuminate\Pagination\LengthAwarePaginator")::resolveCurrentPage();
+
+        if ($sort) {
+            $_ = str_ireplace("ORDER BY", "", $this->_order_by);
+            $_ = str_ireplace(" ASC", "", $_);
+            $_ = str_ireplace(" DESC", "", $_);
+            $_ = trim($_);
+
+            $items = array_reverse(("\Illuminate\Support\Arr")::sort($items, function ($value) use ($_) {
+                return $value->$_;
+            }));
+
+            unset($_);
+            $this->_order_by = null;
+        }
+
+        $currentItems = array_slice($items, $rows * ($currentPage - 1), $rows);
+
+        $p         = ("\Illuminate\Pagination\LengthAwarePaginator");
+        $paginator = new $p($currentItems, count($items), $rows, $currentPage);
+        return $paginator->appends('filter', call_user_func("request", "filter"));
+    }
+
     public function q($sql)
     {
         if ($this->is_connected()) {
@@ -1697,10 +1813,24 @@ trait QueryTrait
                     $rs                  = $this->instance->prepare($sql);
                     $this->affected_Rows = $rs->execute();
 
-                    if ($mode == \PDO::FETCH_INTO) {
-                        $rs->setFetchMode($mode, (is_object($this->fetch_mode->class) ? $this->fetch_mode->class : new $this->fetch_mode->class)); //FETCH_ROW
-                    } else {
-                        $rs->setFetchMode($mode); //FETCH_ROW
+                    switch ($mode) {
+                        case \PDO::FETCH_CLASS:
+                        case (\PDO::FETCH_CLASS | \PDO::FETCH_CLASSTYPE):
+                        case (\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE):
+                        case (\PDO::FETCH_CLASS | \PDO::FETCH_UNIQUE):
+                            $rs->setFetchMode($mode, $this->fetch_mode->class, $this->fetch_mode->argument);
+                            break;
+
+                        case \PDO::FETCH_INTO:
+                            $rs->setFetchMode($mode, (is_object($this->fetch_mode->class) ? $this->fetch_mode->class : new $this->fetch_mode->class));
+                            break;
+
+                        case \PDO::FETCH_LAZY:
+                        case \PDO::FETCH_OBJ:
+                        default:
+                            $rs->setFetchMode($mode); //FETCH_ROW
+
+                            break;
                     }
 
                     $this->error($rs, $sql);
