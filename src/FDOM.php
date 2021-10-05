@@ -247,9 +247,9 @@ class FDOM
         // return ( new static )::call("where", ["is_active", "1"])->fetch_mode(\PDO::FETCH_INTO, static::class)->order_by("id", "desc");
         // return ( new static )::call("where", ["is_active", "1"])->fetch_mode(\PDO::FETCH_INTO)->order_by("id", "desc");
 
-        return ( new static )::call("where", ["is_active", "1"])->fetch_mode(\PDO::FETCH_CLASS)->order_by("id", "desc");
+        // return ( new static )::call("where", ["is_active", "1"])->fetch_mode(\PDO::FETCH_CLASS)->order_by("id", "desc");
 
-        // return ( new static )::call("where", ["is_active", "1"])->order_by("id", "desc");
+        return ( new static )::call("where", ["is_active", "1"])->order_by("id", "desc");
     }
 
     /**
