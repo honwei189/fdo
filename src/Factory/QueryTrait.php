@@ -164,6 +164,21 @@ trait QueryTrait
     }
 
     /**
+     * The syntax for the BETWEEN Condition in MySQL
+     *
+     * Expression BETWEEN value1 AND value2
+     *
+     * @param string $col_name Table field name
+     * @param mixed $value1 Value is compared from
+     * @param mixed $value2 Value is compared to
+     * @return FDO
+     */
+    public function between($col_name, $value1, $value2)
+    {
+        return $this->where("$col_name between " . $this->process_data_attribute($value1) . " and " . $this->process_data_attribute($value2));
+    }
+
+    /**
      * Generate SQL where id = $id
      *
      * @param integer|string $id
@@ -2606,20 +2621,37 @@ trait QueryTrait
         return $sql;
     }
 
+    /**
+     * Declare SQL to execute instead of using ORM method
+     *
+     * @param string $sql
+     * @return FDO
+     */
     public function set_sql($sql)
     {
         $this->_sql = $sql;
+
+        return $this;
     }
 
     /**
-     * Get generated complete SQL
+     * Insert SQL to execute or get generated complete SQL
      *
+     * @param string $sql SQL statement to execute from database
      * @return string
      */
-    public function sql()
+    public function sql($sql = null)
     {
-        $this->_sql_only = true;
-        return $this->find();
+        if (is_null($sql)) {
+            $this->_sql_only = true;
+            return $this->find();
+        } else {
+            if (preg_match('/^\s*(\(|\b)select/isU', $sql)) {
+                return $this->read_all_sql($sql);
+            }
+
+            return $this->query($sql);
+        }
     }
 
     /**
