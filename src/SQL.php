@@ -603,6 +603,8 @@ class SQL
     {
         $this->action_description      = null;
         $this->action_type             = null;
+        $this->derived                 = false;
+        $this->derived_sql             = "";
         $this->_is_exists              = null;
         $this->_where                  = "";
         $this->_count_by               = "";
@@ -625,8 +627,7 @@ class SQL
         $this->parent                  = null;
         $this->fillable                = null;
         $this->is_nofillable           = null;
-        $this->derived                 = false;
-        $this->derived_sql             = "";
+        $this->use_yield               = false;
 
         if ($clear_all) {
             $this->_table_alias      = null;
