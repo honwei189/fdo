@@ -80,7 +80,7 @@ class FDOM
             return $this->$name;
         }
 
-        self::get_table();
+        // self::get_table();
         return self::call($name, $arguments);
     }
 
@@ -249,7 +249,7 @@ class FDOM
 
         // return ( new static )::call("where", ["is_active", "1"])->fetch_mode(\PDO::FETCH_CLASS)->order_by("id", "desc");
 
-        return ( new static )::call("where", ["is_active", "1"])->order_by("id", "desc");
+        return ( new static )::call("where", ["is_active", "1"])->set_encrypt_id()->order_by("id", "desc");
     }
 
     /**
@@ -357,10 +357,10 @@ class FDOM
         }
 
         // if (!is_value(self::$table)) {
-        //     self::get_table();
+            self::get_table();
         // }
 
-        return call_user_func_array(array(self::load_instance(), $name), $arguments);
+        return call_user_func_array(array(self::$instance, $name), $arguments);
     }
 
     private static function call_vars($k, $v)
@@ -397,7 +397,8 @@ class FDOM
                     $_ = explode("\\", $p);
 
                     // call_user_func_array(array(self::load_instance(), "set_table"), [end($_)]);
-                    self::call("set_table", [strtolower(end($_))]);
+                    // self::call("set_table", [strtolower(end($_))]);
+                    call_user_func_array(array(self::$instance, "set_table"), [end($_)]);
                     unset($_);
                 }
 
@@ -406,8 +407,10 @@ class FDOM
 
             unset($tbl);
         } else {
+            // pre(self::$instance);
             // self::call("debug");
-            call_user_func_array(array(self::load_instance(), "set_table"), [static::$_table]);
+            // call_user_func_array(array(self::load_instance(), "set_table"), [static::$_table]);
+            call_user_func_array(array(self::$instance, "set_table"), [static::$_table]);
         }
         // return self::load_instance($name, $arguments);
         // return self::load_instance()->$name($arguments);
@@ -421,9 +424,9 @@ class FDOM
 
     private static function load_instance($name = null, $arguments = null)
     {
-        $p = get_called_class();
-
         if (!self::$instance) {
+            $p = get_called_class();
+
             if (function_exists("app")) {
                 self::$instance = app((class_exists("FDO") ? "FDO" : "fdo"));
 
