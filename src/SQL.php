@@ -900,6 +900,17 @@ class SQL
     }
 
     /**
+     * Convert encrypted id to integer
+     *
+     * @param string $string
+     * @return int
+     */
+    public function get_id($string)
+    {
+        return (int) flayer::Crypto()->decrypt($string);
+    }
+
+    /**
      * Get PDO instance
      *
      * @return PDO_INSTANCE_OBJECT
