@@ -249,7 +249,7 @@ class FDOM
 
         // return ( new static )::call("where", ["is_active", "1"])->fetch_mode(\PDO::FETCH_CLASS)->order_by("id", "desc");
 
-        return ( new static )::call("where", ["is_active", "1"])->set_encrypt_id()->order_by("id", "desc");
+        return (new static)::call("where", ["is_active", "1"])->set_encrypt_id()->order_by("id", "desc");
     }
 
     /**
@@ -276,6 +276,11 @@ class FDOM
         if (is_null($id)) {
             $id = self::$id;
         }
+
+        if (!is_int($id)) {
+            $id = self::call("get_id", $id);
+        }
+
         return self::call("by_id", $id)->read();
     }
 
@@ -357,7 +362,7 @@ class FDOM
         }
 
         // if (!is_value(self::$table)) {
-            self::get_table();
+        self::get_table();
         // }
 
         return call_user_func_array(array(self::$instance, $name), $arguments);
@@ -383,8 +388,8 @@ class FDOM
         }
 
         if (class_exists("Auth")) {
-            self::$instance->username = ("\Auth")::user()->username;
-            self::$instance->user_id  = ("\Auth")::id();
+            self::$instance->username = ("\Auth")::user()->username ?? null;
+            self::$instance->user_id  = ("\Auth")::id() ?? null;
         }
 
         if (!str(static::$_table)) {
