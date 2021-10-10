@@ -53,7 +53,7 @@ trait PaginatorTrait
     public function pagination($nums_data = null, $is_URL_auto_rewrite = true)
     {
         // $col       = "";
-        $total     = 0;
+        $total = 0;
         // $nums_data = 0;
 
         // if (strpos($this->sql, "Select SQL_CALC_FOUND_ROWS") !== false) {
@@ -88,49 +88,50 @@ trait PaginatorTrait
             $total_page = 0;
         }
 
-        if (!isset($_GET['p']) || trim($_GET['p']) == "") {
+        if (!isset($_GET['page']) || trim($_GET['page']) == "") {
             $p_id = 1;
         } else {
-            $p_id = $_GET['p'];
+            $p_id = $_GET['page'];
         }
+        
         $web_vars = $_SERVER['REQUEST_URI'];
 
         if (is_array($_POST) && count($_POST) > 0) {
             foreach ($_POST as $Key => $value) {
-                if (trim($Key) != "p") {
+                if (trim($Key) != "page") {
                     $_Web_vars[] = $Key . "=" . $value;
                 }
             }
 
-            $web_vars .= ((trim($web_vars) != "") ? "&" : "/?") . @Join("&", $_Web_vars);
+            $web_vars .= ((trim($web_vars) != "") ? "&" : "/?") . @join("&", $_Web_vars);
             unset($_Web_vars);
         }
 
-        if ($is_URL_auto_rewrite === true && Count($_GET) === 0) {
-            if (Substr($web_vars, -1) !== "/") {
+        if ($is_URL_auto_rewrite === true && count($_GET) === 0) {
+            if (substr($web_vars, -1) !== "/") {
                 $web_vars .= "/";
             }
         }
 
         if (is_null($nums_data)) {
             $nums_data = $total;
-        } else if (Is_object($nums_data)) {
+        } else if (is_object($nums_data)) {
             unset($nums_data);
             $nums_data = $total;
         }
 
         $web_vars = trim($web_vars);
-        if ($web_vars == "/" || $web_vars == "" || Substr($web_vars, -1) == "/") {
-            $URL = "?p={paging}";
+        if ($web_vars == "/" || $web_vars == "" || Substr($web_vars, -1) == "/" || !preg_match("/[&|\?]/si", $web_vars)) {
+            $URL = "?page={paging}";
         } else {
-            if (preg_match("/p=/isU", $web_vars, $reg)) {
-                $URL = preg_replace("/p=[0-9]+$/isU", "p={paging}", $web_vars);
+            if (preg_match("/page=/isU", $web_vars, $reg)) {
+                $URL = preg_replace("/page=[0-9]+$/isU", "page={paging}", $web_vars);
             } else {
-                $URL = $web_vars . "&p={paging}";
+                $URL = $web_vars . "&page={paging}";
             }
         }
 
-        if ($is_URL_auto_rewrite === true && Count($_GET) === 0) {
+        if ($is_URL_auto_rewrite === true && count($_GET) === 0) {
             $URL = $web_vars . $URL;
         }
 
