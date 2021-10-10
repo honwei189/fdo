@@ -46,6 +46,7 @@ trait QueryTrait
     private $derived     = false;
     private $derived_sql = "";
     private $FDO;
+    private $use_yield    = false;
     private $_count_group = false;
     private $_fetch_one   = false;
     private $_is_exists;
@@ -443,12 +444,10 @@ trait QueryTrait
                 }
 
                 $this->fetch_mode = (object) ["mode" => $mode, "class" => $class_name, "argument" => []];
-
                 break;
 
             default:
                 $this->fetch_mode = (object) ["mode" => $mode, "class" => null, "arguments" => null];
-
                 break;
         }
 
@@ -869,6 +868,49 @@ trait QueryTrait
                 return $this->_receive_raws($this->read_one_sql($sql, false, $this->fetch_mode->mode));
             }
         }
+    }
+
+    /**
+     * Alternative function of find(), but return as yield (Generator) instead of array
+     *
+     * Recommend if fetching data more than 100, use this function instead of find() to reduce memory usage,
+     * the speed also not much different
+     *
+     * example:
+     *
+     * 10000 records
+     * array 0.80155396461487 ms (0.9 mb)
+     * yield 0.78375506401062 ms (0.38 mb)
+     *
+     * 5000 records
+     * array 0.40669298171997 ms (0.65 mb)
+     * yield 0.38653302192688 ms (0.38 mb)
+     *
+     * 1000 records
+     * array 0.072736978530884 ms (0.43 mb)
+     * yield 0.077313184738159 ms (0.38 mb)
+     *
+     * 500 records
+     * array 0.036746978759766 ms (0.4 mb)
+     * yield 0.039280891418457 ms (0.38 mb)
+     *
+     * 200 records
+     * array 0.013989925384521 ms (0.4 mb)
+     * yield 0.016298055648804 ms (0.38 mb)
+     *
+     * 100 records
+     * array 0.007404088973999 ms (0.4 mb)
+     * yield 0.0089011192321777 ms (0.38 mb)
+     *
+     * @param string $find_by_column_name
+     * @param string $data
+     * @param string $select_cols_name
+     * @return Generator Traveser
+     */
+    public function findLarge($find_by_column_name = null, $data = null, $select_cols_name = "*")
+    {
+        $this->use_collection();
+        return $this->find($find_by_column_name, $data, $select_cols_name);
     }
 
     /**
@@ -1671,32 +1713,24 @@ trait QueryTrait
         }
 
         if (!class_exists("Facade\\Ignition\\Support\\LaravelVersion")) {
-            return $this->limit($rows, $from)->find();
+            if ($this->use_yield) {
+                return $this->data_paginate_collection($rows, $from);
+            } else {
+                return (object) ["data" => $this->limit($rows, $from)->find(), "paginate" => $this->pagination()];
+            }
         } else {
             if ($this->disable_laravel) {
-                // $o = (new $this->parent);
-                // $o->data = $this->limit($rows, $from)->find();
+                if ($this->use_yield) {
+                    return $this->data_paginate_collection($rows, $from);
+                } else {
+                    $o       = new \honwei189\FDO\fdoData;
+                    $o->data = $this->limit($rows, $from)->find();
+                    $o->creates("links", function () {
+                        return $this->pagination();
+                    });
 
-                // $o->creates("links", function () use ($o) {
-                //     return $this->pagination();
-                // });
-
-                // $a = $this;
-
-                $o       = new \honwei189\FDO\fdoData;
-                $o->data = $this->limit($rows, $from)->find();
-                // $o->links = function(){
-                //     return $this->pagination();
-                //     // return $a->pagination();
-                // };
-                $o->creates("links", function () {
-                    return $this->pagination();
-                    // return $a->pagination();
-                });
-
-                return $o;
-
-                // return $this->limit($rows, $from)->find();
+                    return $o;
+                }
             }
         }
 
@@ -1808,6 +1842,7 @@ trait QueryTrait
     {
         $this->_set_sql_to_sub = false;
         $this->_sql            = "";
+
         if (!empty($this->instance)) {
             $this->action_type = "Q";
 
@@ -1865,200 +1900,204 @@ trait QueryTrait
                 }
 
                 if (!is_null($rs)) {
-                    if ($this->_set_encrypt_id) {
-                        if ($mode == \PDO::FETCH_INTO || $mode == \PDO::FETCH_LAZY) {
-                            $vars = null;
-                            $data = [];
-                            $i    = 0;
-
-                            if ($mode == \PDO::FETCH_LAZY) {
-                                while ($rows = $rs->fetch()) {
-                                    $data[$i] = (array) $rows;
-                                    unset($data[$i]['queryString']);
-
-                                    foreach ($data[$i] as $k => $v) {
-                                        if (stripos($k, "_id") !== false || (string) $k == "id" || substr($k, -2) == "id") {
-                                            $data[$i][$k] = trim(flayer::Crypto()->encrypt($v));
-                                        }
-                                    }
-
-                                    ++$i;
-                                }
-                            } else {
-                                while ($rows = $rs->fetch()) {
-                                    $vars     = (array) $rows;
-                                    $data[$i] = clone $rows;
-
-                                    foreach ($vars as $k => $v) {
-                                        if (stripos($k, "_id") !== false || (string) $k == "id" || substr($k, -2) == "id") {
-                                            $data[$i]->$k = trim(flayer::Crypto()->encrypt($v));
-                                        }
-                                    }
-                                    ++$i;
-                                }
-                            }
-
-                            unset($vars);
-                            unset($i);
-                            return $data;
-                        } else {
-                            if (!is_null($column_num)) {
-                                $data = $rs->fetchAll($mode, $column_num);
-                            } else {
-                                $data = $rs->fetchAll($mode);
-                            }
-
-                            $count = $rs->rowCount();
-
-                            if ($count > 0) {
-                                if (is_multi_array($data)) {
-                                    for ($i = 0; $i < $count; ++$i) {
-                                        // $data[$i]['id'] = trim(flayer::Crypto()->encrypt($data[$i]['id']));
-                                        $x = 0;
-                                        foreach ($data[$i] as $k => $v) {
-                                            if (stripos($k, "_id") !== false || (string) $k == "id" || substr($k, -2) == "id") {
-                                                $data[$i][$k] = trim(flayer::Crypto()->encrypt($data[$i][$k]));
-
-                                                if ($mode == \PDO::FETCH_BOTH) {
-                                                    $data[$i][$x] = $data[$i][$k];
-                                                }
-                                            }
-                                            $x++;
-                                        }
-                                    }
-                                } else {
-                                    foreach ($data as $k => $v) {
-                                        if (stripos($k, "_id") !== false || (string) $k == "id" || substr($k, -2) == "id") {
-                                            $data[$k] = trim(flayer::Crypto()->encrypt($data[$k]));
-                                        }
-                                    }
-                                }
-                            }
-
-                            $count = null;
-                        }
-
-                        return $data;
-                    } else if ($this->_set_encrypt_data) {
-                        if ($mode == \PDO::FETCH_INTO || $mode == \PDO::FETCH_LAZY) {
-                            $vars = null;
-                            $data = [];
-                            $i    = 0;
-
-                            if ($mode == \PDO::FETCH_LAZY) {
-                                while ($rows = $rs->fetch()) {
-                                    $data[$i] = (array) $rows;
-                                    unset($data[$i]['queryString']);
-
-                                    foreach ($data[$i] as $k => $v) {
-                                        $data[$i][$k] = trim(flayer::Crypto()->encrypt($v));
-                                    }
-
-                                    ++$i;
-                                }
-                            } else {
-                                while ($rows = $rs->fetch()) {
-                                    $vars     = (array) $rows;
-                                    $data[$i] = clone $rows;
-
-                                    foreach ($vars as $k => $v) {
-                                        $data[$i]->$k = trim(flayer::Crypto()->encrypt($v));
-                                    }
-                                    ++$i;
-                                }
-                            }
-
-                            unset($vars);
-                            unset($i);
-                            return $data;
-                        } else {
-                            if (!is_null($column_num)) {
-                                $data = $rs->fetchAll($mode, $column_num);
-                            } else {
-                                $data = $rs->fetchAll($mode);
-                            }
-
-                            $count = $rs->rowCount();
-
-                            if ($count > 0) {
-                                if ($mode != \PDO::FETCH_INTO && is_multi_array($data)) {
-                                    for ($i = 0; $i < $count; ++$i) {
-                                        // $data[$i]['id'] = trim(flayer::Crypto()->encrypt($data[$i]['id']));
-                                        $x = 0;
-                                        foreach ($data[$i] as $k => $v) {
-                                            $data[$i][$k] = trim(flayer::Crypto()->encrypt($data[$i][$k]));
-
-                                            if ($mode == \PDO::FETCH_BOTH) {
-                                                $data[$i][$x] = $data[$i][$k];
-                                            }
-
-                                            $x++;
-                                        }
-                                    }
-                                } else {
-                                    foreach ($data as $k => $v) {
-                                        $data[$k] = trim(flayer::Crypto()->encrypt($data[$k]));
-                                    }
-
-                                }
-                            }
-
-                            $count = null;
-                            return $data;
-
-                        }
+                    if ($this->use_yield) {
+                        return $this->fetch_to_data_collection($rs, $mode, $column_num);
                     } else {
-                        if ($mode == \PDO::FETCH_INTO) {
-                            $vars = null;
-                            $data = [];
-                            $i    = 0;
-
-                            while ($rows = $rs->fetch()) {
-                                $vars     = (array) $rows;
-                                $data[$i] = clone $rows;
-
-                                foreach ($vars as $k => $v) {
-                                    $data[$i]->$k = $v;
-                                }
-                                ++$i;
-                            }
-
-                            unset($vars);
-                            unset($i);
-                            return $data;
-                        } else {
-                            if (!is_null($column_num)) {
-                                do
-                                return $rs->fetchAll($mode, $column_num);while ($rs->nextRowSet());
-                            } else {
-                                if ($mode == \PDO::FETCH_LAZY) {
-                                    // return $rs->fetchAll(\PDO::FETCH_OBJ);
-                                    $data = [];
-                                    $i    = 0;
-                                    while ($rows = $rs->fetch()) {
-                                        $data[$i] = (array) $rows;
-                                        unset($data[$i]['queryString']);
-
-                                        foreach ($data[$i] as $k => $v) {
-                                            $data[$i][$k] = trim($v);
-                                        }
-
-                                        ++$i;
-                                    }
-
-                                    return $data;
-                                } else {
-                                    return $rs->fetchAll($mode);
-                                }
-
-                                // return $rs->fetchAll($mode);
-                                // do
-                                // return $rs->fetchAll($mode);while ($rs->nextRowSet());
-                            }
-
-                        }
-
+                        return $this->fetch_data_process($rs, $mode, $column_num);
                     }
+
+                    // if ($this->_set_encrypt_id) {
+                    //     if ($mode == \PDO::FETCH_CLASS || $mode == \PDO::FETCH_INTO || $mode == \PDO::FETCH_LAZY) {
+                    //         $vars = null;
+                    //         $data = [];
+                    //         $i    = 0;
+
+                    //         if ($mode == \PDO::FETCH_LAZY) {
+                    //             while ($rows = $rs->fetch()) {
+                    //                 $data[$i] = (array) $rows;
+                    //                 unset($data[$i]['queryString']);
+
+                    //                 foreach ($data[$i] as $k => $v) {
+                    //                     if (stripos($k, "_id") !== false || (string) $k == "id" || substr($k, -2) == "id") {
+                    //                         $data[$i][$k] = trim(flayer::Crypto()->encrypt($v));
+                    //                     }
+                    //                 }
+
+                    //                 ++$i;
+                    //             }
+                    //         } else {
+                    //             while ($rows = $rs->fetch()) {
+                    //                 $vars     = (array) $rows;
+                    //                 $data[$i] = clone $rows;
+
+                    //                 foreach ($vars as $k => $v) {
+                    //                     if (stripos($k, "_id") !== false || (string) $k == "id" || substr($k, -2) == "id") {
+                    //                         $data[$i]->$k = trim(flayer::Crypto()->encrypt($v));
+                    //                     }
+                    //                 }
+                    //                 ++$i;
+                    //             }
+                    //         }
+
+                    //         unset($vars);
+                    //         unset($i);
+                    //         return $data;
+                    //     } else {
+                    //         if (!is_null($column_num)) {
+                    //             $data = $rs->fetchAll($mode, $column_num);
+                    //         } else {
+                    //             $data = $rs->fetchAll($mode);
+                    //         }
+
+                    //         $count = $rs->rowCount();
+
+                    //         if ($count > 0) {
+                    //             if (is_multi_array($data)) {
+                    //                 for ($i = 0; $i < $count; ++$i) {
+                    //                     // $data[$i]['id'] = trim(flayer::Crypto()->encrypt($data[$i]['id']));
+                    //                     $x = 0;
+                    //                     foreach ($data[$i] as $k => $v) {
+                    //                         if (stripos($k, "_id") !== false || (string) $k == "id" || substr($k, -2) == "id") {
+                    //                             $data[$i][$k] = trim(flayer::Crypto()->encrypt($data[$i][$k]));
+
+                    //                             if ($mode == \PDO::FETCH_BOTH) {
+                    //                                 $data[$i][$x] = $data[$i][$k];
+                    //                             }
+                    //                         }
+                    //                         $x++;
+                    //                     }
+                    //                 }
+                    //             } else {
+                    //                 foreach ($data as $k => $v) {
+                    //                     if (stripos($k, "_id") !== false || (string) $k == "id" || substr($k, -2) == "id") {
+                    //                         $data[$k] = trim(flayer::Crypto()->encrypt($data[$k]));
+                    //                     }
+                    //                 }
+                    //             }
+                    //         }
+
+                    //         $count = null;
+                    //         return $data;
+                    //     }
+                    // } else if ($this->_set_encrypt_data) {
+                    //     if ($mode == \PDO::FETCH_INTO || $mode == \PDO::FETCH_LAZY) {
+                    //         $vars = null;
+                    //         $data = [];
+                    //         $i    = 0;
+
+                    //         if ($mode == \PDO::FETCH_LAZY) {
+                    //             while ($rows = $rs->fetch()) {
+                    //                 $data[$i] = (array) $rows;
+                    //                 unset($data[$i]['queryString']);
+
+                    //                 foreach ($data[$i] as $k => $v) {
+                    //                     $data[$i][$k] = trim(flayer::Crypto()->encrypt($v));
+                    //                 }
+
+                    //                 ++$i;
+                    //             }
+                    //         } else {
+                    //             while ($rows = $rs->fetch()) {
+                    //                 $vars     = (array) $rows;
+                    //                 $data[$i] = clone $rows;
+
+                    //                 foreach ($vars as $k => $v) {
+                    //                     $data[$i]->$k = trim(flayer::Crypto()->encrypt($v));
+                    //                 }
+                    //                 ++$i;
+                    //             }
+                    //         }
+
+                    //         unset($vars);
+                    //         unset($i);
+                    //         return $data;
+                    //     } else {
+                    //         if (!is_null($column_num)) {
+                    //             $data = $rs->fetchAll($mode, $column_num);
+                    //         } else {
+                    //             $data = $rs->fetchAll($mode);
+                    //         }
+
+                    //         $count = $rs->rowCount();
+
+                    //         if ($count > 0) {
+                    //             if ($mode != \PDO::FETCH_INTO && is_multi_array($data)) {
+                    //                 for ($i = 0; $i < $count; ++$i) {
+                    //                     // $data[$i]['id'] = trim(flayer::Crypto()->encrypt($data[$i]['id']));
+                    //                     $x = 0;
+                    //                     foreach ($data[$i] as $k => $v) {
+                    //                         $data[$i][$k] = trim(flayer::Crypto()->encrypt($data[$i][$k]));
+
+                    //                         if ($mode == \PDO::FETCH_BOTH) {
+                    //                             $data[$i][$x] = $data[$i][$k];
+                    //                         }
+
+                    //                         $x++;
+                    //                     }
+                    //                 }
+                    //             } else {
+                    //                 foreach ($data as $k => $v) {
+                    //                     $data[$k] = trim(flayer::Crypto()->encrypt($data[$k]));
+                    //                 }
+
+                    //             }
+                    //         }
+
+                    //         $count = null;
+                    //         return $data;
+
+                    //     }
+                    // } else {
+                    //     if ($mode == \PDO::FETCH_INTO) {
+                    //         $vars = null;
+                    //         $data = [];
+                    //         $i    = 0;
+
+                    //         while ($rows = $rs->fetch()) {
+                    //             $vars     = (array) $rows;
+                    //             $data[$i] = clone $rows;
+
+                    //             foreach ($vars as $k => $v) {
+                    //                 $data[$i]->$k = $v;
+                    //             }
+                    //             ++$i;
+                    //         }
+
+                    //         unset($vars);
+                    //         unset($i);
+                    //         return $data;
+                    //     } else {
+                    //         if (!is_null($column_num)) {
+                    //             do
+                    //             return $rs->fetchAll($mode, $column_num);while ($rs->nextRowSet());
+                    //         } else {
+                    //             if ($mode == \PDO::FETCH_LAZY) {
+                    //                 // return $rs->fetchAll(\PDO::FETCH_OBJ);
+                    //                 $data = [];
+                    //                 $i    = 0;
+                    //                 while ($rows = $rs->fetch()) {
+                    //                     $data[$i] = (array) $rows;
+                    //                     unset($data[$i]['queryString']);
+
+                    //                     foreach ($data[$i] as $k => $v) {
+                    //                         $data[$i][$k] = trim($v);
+                    //                     }
+
+                    //                     ++$i;
+                    //                 }
+
+                    //                 return $data;
+                    //             } else {
+                    //                 return $rs->fetchAll($mode);
+                    //             }
+
+                    //             // return $rs->fetchAll($mode);
+                    //             // do
+                    //             // return $rs->fetchAll($mode);while ($rs->nextRowSet());
+                    //         }
+
+                    //     }
+                    // }
                 }
 
             } catch (\PDOException $e) {
@@ -3193,6 +3232,21 @@ trait QueryTrait
     }
 
     /**
+     * Use PHP's yield to get data from database
+     *
+     * This is applicable to find(), findAll(), findById, findBy*()
+     *
+     * @param bool $bool
+     * @return FDO
+     */
+    public function use_collection(bool $bool = true)
+    {
+        $this->use_yield = $bool;
+
+        return $this;
+    }
+
+    /**
      * Generate SQL "where" statement
      *
      * e.g: $this->where("id = 123");  // output select * from example where id = 123
@@ -3633,5 +3687,172 @@ trait QueryTrait
         }
 
         return $data;
+    }
+
+    /**
+     * writes / stores data from db and create pagination to data collection generator -- yield to reduce memory usages
+     *
+     * @param int $rows
+     * @param int $from
+     * @return string
+     */
+    private function data_paginate_collection($rows, $from)
+    {
+        // yield $this->limit($rows, $from)->findLarge();
+        yield from $this->limit($rows, $from)->findLarge();
+        return $this->pagination();
+    }
+
+    /**
+     * Fetch data from db and process it
+     *
+     * @param PDOStatement $data PDOstatement.  examplee:  $this->fetch_to_data_collection($db->prepare($sql));
+     * @param int $mode PDO FETCH mode
+     * @param int $column_num Column number.  Specify which db table column you want
+     */
+    private function fetch_data_process(\PDOStatement $rs, int $mode = \PDO::FETCH_ASSOC, $column_num = null)
+    {
+        $is_object = ($this->fetch_mode_type($mode) == "object" ? true : false);
+        $data      = [];
+        $i         = 0;
+
+        while ($rows = $rs->fetch()) {
+            if ($mode == \PDO::FETCH_LAZY && $rows['queryString'] ?? false) {
+                unset($rows['queryString']);
+            }
+
+            // if (!is_null($column_num) && is_numeric($column_num)) {
+            //     $data[] = (array_values($rows)[$column_num] ?? null);
+            // } else {
+            //     $data[] = $rows;
+            // }
+
+            if (!is_null($column_num) && is_int($column_num)) {
+                $key = array_keys((array) $rows)[$column_num];
+                if ($is_object) {
+                    $data[][$key] = $rows->$key;
+                    $data[$i]     = (object) $data[$i];
+                } else {
+                    $data[][$key] = $rows[$key];
+                }
+
+                unset($key);
+            } else {
+                $data[] = $rows;
+            }
+
+            if ($this->_set_encrypt_id) {
+                foreach ($data[$i] as $k => $v) {
+                    if (stripos($k, "_id") !== false || (string) $k == "id" || substr($k, -2) == "id") {
+                        if ($is_object) {
+                            $data[$i]->$k = trim(flayer::Crypto()->encrypt($v));
+                        } else {
+                            $data[$i][$k] = trim(flayer::Crypto()->encrypt($v));
+                        }
+                    }
+                }
+            } else if ($this->_set_encrypt_data) {
+                foreach ($data[$i] as $k => $v) {
+                    if ($is_object) {
+                        $data[$i]->$k = trim(flayer::Crypto()->encrypt($v));
+                    } else {
+                        $data[$i][$k] = trim(flayer::Crypto()->encrypt($v));
+                    }
+                }
+            }
+
+            ++$i;
+        }
+
+        unset($i);
+        unset($rows);
+        unset($is_object);
+
+        return $data;
+    }
+
+    /**
+     * Check the fetch mode is object or an array
+     *
+     * @param int $mode
+     * @return string
+     */
+    private function fetch_mode_type($mode)
+    {
+        switch ($mode) {
+            case \PDO::FETCH_CLASS:
+            case \PDO::FETCH_LAZY:
+            case \PDO::FETCH_OBJ:
+            case \PDO::FETCH_INTO:
+            case (\PDO::FETCH_CLASS | \PDO::FETCH_CLASSTYPE):
+            case (\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE):
+            case (\PDO::FETCH_CLASS | \PDO::FETCH_UNIQUE):
+                return "object";
+                break;
+
+            default:
+                return "array";
+                break;
+        }
+    }
+
+    /**
+     * Fetch data from db and writes / stores into data collection generator -- yield to reduce memory usages
+     *
+     * @param PDOStatement $data PDOstatement.  examplee:  $this->fetch_to_data_collection($db->prepare($sql));
+     * @param int $mode PDO FETCH mode
+     * @param int $column_num Column number.  Specify which db table column you want
+     */
+    private function fetch_to_data_collection(\PDOStatement $rs, int $mode = \PDO::FETCH_ASSOC, $column_num = null)
+    {
+        $is_object = ($this->fetch_mode_type($mode) == "object" ? true : false);
+
+        while ($rows = $rs->fetch()) {
+            if ($mode == \PDO::FETCH_LAZY && $rows['queryString'] ?? false) {
+                unset($rows['queryString']);
+            }
+
+            // $rows = (array_values($rows)[$column_num] ?? $rows);
+            if (!is_null($column_num) && is_int($column_num)) {
+                $key = array_keys((array) $rows)[$column_num];
+                $_   = $rows;
+                unset($rows);
+
+                if ($is_object) {
+                    $rows[$key] = $_->$key;
+                    $rows       = (object) $rows;
+                } else {
+                    $rows[$key] = $_[$key];
+                }
+
+                unset($key);
+                unset($_);
+            }
+
+            if ($this->_set_encrypt_id) {
+                foreach ($rows as $k => $v) {
+                    if (stripos($k, "_id") !== false || (string) $k == "id" || substr($k, -2) == "id") {
+                        if ($is_object) {
+                            $rows->$k = trim(flayer::Crypto()->encrypt($v));
+                        } else {
+                            $rows[$k] = trim(flayer::Crypto()->encrypt($v));
+                        }
+                    }
+                }
+            } else if ($this->_set_encrypt_data) {
+                foreach ($rows as $k => $v) {
+                    if ($is_object) {
+                        $rows->$k = trim(flayer::Crypto()->encrypt($v));
+                    } else {
+                        $rows[$k] = trim(flayer::Crypto()->encrypt($v));
+                    }
+                }
+            }
+
+            yield $rows;
+        }
+
+        unset($rows);
+        unset($is_object);
     }
 }
