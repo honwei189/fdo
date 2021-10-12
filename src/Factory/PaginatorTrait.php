@@ -183,19 +183,19 @@ trait PaginatorTrait
         if (is_array($paging)) {
             $ret = "<ul class=\"pagination\">\n";
             if ($p_id > 10) {
-                $ret .= "<li><a href=\"" . str_replace("{paging}", 1, $URL) . "\"><i class='fa fa-arrow-left icon-xs icon-orange icon-secondary'></i></a></li>\n";
+                $ret .= "<li class=\"paginate_button page-item previous\"><a href=\"" . str_replace("{paging}", 1, $URL) . "\"><i class='fa fa-arrow-left icon-xs icon-orange icon-secondary'></i></a></li>\n";
             }
 
             foreach ($paging as $value) {
-                if ($value == "...") {
-                    $ret .= "    <li" . (($value == $p_id) ? " class=\"active\"" : "") . ">$value</li>\n";
-                } else {
-                    $ret .= "    <li" . (($value == $p_id) ? " class=\"active\"" : "") . "><a href=\"" . str_replace("{paging}", $value, $URL) . "\">$value</a></li>\n";
-                }
+                // if ($value == "...") {
+                //     $ret .= "    <li class=\"paginate_button page-item" . (($value == $p_id) ? " active" : "") . "\">$value</li>\n";
+                // } else {
+                    $ret .= "    <li class=\"paginate_button page-item" . (($value == $p_id) ? " active" : "") . "\"><a class=\"page-link\" href=\"" . str_replace("{paging}", $value, $URL) . "\">$value</a></li>\n";
+                // }
             }
 
             if ($total_page > $_numPage) {
-                $ret .= "    <li><a href=\"" . str_replace("{paging}", ($init + 10), $URL) . "\"><i class='fa fa-arrow-right icon-xs icon-orange icon-secondary'></i></a></li>\n";
+                $ret .= "    <li class=\"paginate_button page-item next\"><a class=\"page-link\" href=\"" . str_replace("{paging}", ($init + 10), $URL) . "\"><i class='fa fa-arrow-right icon-xs icon-orange icon-secondary'></i></a></li>\n";
             }
 
             $ret .= "\n  </ul>";
