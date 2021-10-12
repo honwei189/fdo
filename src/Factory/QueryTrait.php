@@ -1454,12 +1454,12 @@ trait QueryTrait
             }
         }
 
-        if (!isset($_GET['p']) && !str($_GET['p'])) {
+        if (!isset($_GET['page']) && !str($_GET['page'])) {
             $this->page_id    = 1;
             $this->limit_data = 0;
         } else {
-            $this->page_id    = $_GET['p'];
-            $this->limit_data = ($_GET['p'] * $get_nums_of_data) - $get_nums_of_data;
+            $this->page_id    = $_GET['page'];
+            $this->limit_data = ($_GET['page'] * $get_nums_of_data) - $get_nums_of_data;
             $start_from_nums  = $this->limit_data;
         }
 
@@ -1479,12 +1479,12 @@ trait QueryTrait
      */
     public function limit_sql($sql, $nums_data_to_fetch = 10)
     {
-        if (!isset($_GET['p_id']) && !str($_GET['p_id'])) {
+        if (!isset($_GET['page']) && !str($_GET['page'])) {
             $this->page_id    = 1;
             $this->limit_data = 0;
         } else {
-            $this->page_id    = $_GET['p_id'];
-            $this->limit_data = ($_GET['p_id'] * $nums_data_to_fetch) - $nums_data_to_fetch;
+            $this->page_id    = $_GET['page'];
+            $this->limit_data = ($_GET['page'] * $nums_data_to_fetch) - $nums_data_to_fetch;
         }
 
         // $sql = preg_replace("/select/i", "Select SQL_CALC_FOUND_ROWS", $sql, 1);
