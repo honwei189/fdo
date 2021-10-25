@@ -224,16 +224,27 @@ trait OperateTrait
      *
      * FDOM::fill(["name" => "Tester", "email" => "tester@example"]);
      *
-     * @param array $array
+     * @param array $array Dataset (key and value) to insert into database.  e.g: ["name" => "Tester", "email" => "tester@example"]
+     * @param array $excludes Ignore the key and do not save into database.  e.g: ["name", "gender"]
      * @return FDO
      */
-    public function fill(array $array)
+    public function fill(array $array, array $excludes = null)
     {
+        if (is_array($excludes) && count($excludes) > 0) {
+            $excludes = array_flip($excludes);
+        }
+
+        if (!$this->is_laravel && (!is_array($this->fillable) || (is_array($this->fillable) && count($this->fillable) == 0))) {
+            $this->is_nofillable = true;
+        } else if ($this->is_laravel && !is_value($this->parent)) {
+            $this->is_nofillable = true;
+        }
+
         if (!$this->is_nofillable) {
             if (is_array($this->fillable) && count($this->fillable) > 0) {
                 $match = false;
                 foreach ($this->fillable as $v) {
-                    if (isset($array[$v])) {
+                    if (isset($array[$v]) && !isset($excludes[$v])) {
                         $this->_vars[$v] = $array[$v];
                         $match           = true;
                     }
@@ -242,6 +253,8 @@ trait OperateTrait
                 if (!$match) {
                     die($this->print_sql_format("No data columns matched with " . (str($this->parent) ? $this->parent . " ->" : "") . "\$fillable - " . implode(", ", $this->fillable)));
                 }
+            } else {
+                die($this->print_sql_format("No \$fillable found" . (str($this->parent) ? " from " . $this->parent : "")));
             }
 
             return $this;
@@ -256,7 +269,9 @@ trait OperateTrait
                         break;
 
                     default:
-                        $this->_vars[$k] = $v;
+                        if (!isset($excludes[$k])) {
+                            $this->_vars[$k] = $v;
+                        }
                         break;
                 }
             }
