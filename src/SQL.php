@@ -63,6 +63,7 @@ class SQL
     private $_show_sql         = false;
     private $_user             = null;
     private $_user_id          = null;
+    protected $is_laravel      = false;
 
     // protected $require = ["helper", "crud"];
     // protected $require = ["honwei189\\data"];
@@ -95,6 +96,7 @@ class SQL
 
             // check is laravel
             if (class_exists("Illuminate\Database\Eloquent\Model") && class_exists("Carbon\Laravel\ServiceProvider") && class_exists("DB")) {
+                $this->is_laravel = true;
                 $this->set_instance(("\DB")::connection('mysql')->getPdo());
                 $this->instance->setAttribute(\PDO::ATTR_EMULATE_PREPARES, false);
             } else {
