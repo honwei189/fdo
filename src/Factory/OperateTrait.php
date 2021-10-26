@@ -283,6 +283,57 @@ trait OperateTrait
     }
 
     /**
+     * Declare the ORM key mapping and save into the database.
+     *
+     * Example: $_POST['name'], in DB it is "display_name", if using fill(), it will save to column "name" instead of currect name = "display_name"
+     *
+     * insert into aaa (name) values ...
+     *
+     * After use fillmap(), it will save to column "display_name"
+     *
+     * insert into aaa (display_name) values ...
+     *
+     *
+     * Format :
+     *
+     * [key => value]
+     *
+     * Key = Input name / $_POST[ANY_NAME]
+     * Value = Real name in DB
+     *
+     * e.g: ["g" => "gender", "name" => "display_name"];
+     *
+     * Key = $_POST['g'], $_POST['name'], Value = insert into aaa (gender, display_name) values ...
+     *
+     * @param array $keymap e.g: ["g" => "gender", "name" => "display_name"]
+     * @param array $data e.g: ["g" => "M", "name" => "Name"]; $_POST
+     * @param array $excludes Ignore the key (mapped key name.  e.g: $keymaps = ["g" => "gender"], $excludes = ["gender"]) and do not save into database.  e.g: ["name", "gender"]
+     * @return FDO
+     */
+    public function fillmap(array $keymaps, array $data = null, array $excludes = null)
+    {
+        if (!is_array($data)) {
+            $data = $this->_post;
+        }
+
+        $mapped = [];
+
+        foreach ($data as $k => $v) {
+            if (isset($keymaps[$k])) {
+                unset($data[$k]);
+                $mapped[$keymaps[$k]] = $v;
+            } else {
+                $mapped[$k] = $v;
+            }
+        }
+
+        $data = &$mapped;
+        unset($mapped);
+
+        return $this->fill($data, $excludes);
+    }
+
+    /**
      * Get last insert ID
      *
      * @return integer
