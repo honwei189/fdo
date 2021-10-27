@@ -224,11 +224,11 @@ trait OperateTrait
      *
      * FDOM::fill(["name" => "Tester", "email" => "tester@example"]);
      *
-     * @param array $array Dataset (key and value) to insert into database.  e.g: ["name" => "Tester", "email" => "tester@example"]
+     * @param array $dataset Dataset (key and value) to insert into database.  e.g: $_POST or $dataset = ["name" => "Tester", "email" => "tester@example"]
      * @param array $excludes Ignore the key and do not save into database.  e.g: ["name", "gender"]
      * @return FDO
      */
-    public function fill(array $array, array $excludes = null)
+    public function fill(array $dataset, array $excludes = null)
     {
         if (is_array($excludes) && count($excludes) > 0) {
             $excludes = array_flip($excludes);
@@ -242,10 +242,12 @@ trait OperateTrait
 
         if (!$this->is_nofillable) {
             if (is_array($this->fillable) && count($this->fillable) > 0) {
-                $match = false;
+                $match   = false;
+                $dataset = (object) $dataset;
+
                 foreach ($this->fillable as $v) {
-                    if (isset($array[$v]) && !isset($excludes[$v])) {
-                        $this->_vars[$v] = $array[$v];
+                    if (property_exists($dataset, $v) && !isset($excludes[$v])) {
+                        $this->_vars[$v] = $dataset->$v;
                         $match           = true;
                     }
                 }
@@ -260,8 +262,10 @@ trait OperateTrait
             return $this;
         }
 
-        if (isset($array) && is_array($array) && count($array) > 0) {
-            foreach ($array as $k => $v) {
+        if (isset($dataset) && is_array($dataset) && count($dataset) > 0) {
+            $this->_vars = [];
+
+            foreach ($dataset as $k => $v) {
                 switch ($k) {
                     case "_token":
                     case "_method":
@@ -277,6 +281,54 @@ trait OperateTrait
             }
         } else {
             die($this->print_sql_format("No passing any data columns to save into database"));
+        }
+
+        return $this;
+    }
+
+    /**
+     * Save dataset data (maybe the dataset is huge) into database based on the specified data columns -- $cols
+     *
+     * e.g:
+     *
+     * $dataset = ["name" => "Tester", "email" => "tester@example", "gender" => "M"]
+     * $cols_only = ["name", "gender"];
+     *
+     * From above example, only "name" and "gender" will be save into database whereas "email" will be ignored
+     *
+     * @param array $dataset Dataset (key and value) to insert into database.  e.g: $_POST or $dataset = ["name" => "Tester", "email" => "tester@example", "gender" => "M"]
+     * @param array $cols_only Data columns name to fill in database. e.g: ["name", "gender"]
+     * @return FDO
+     */
+    public function fillonly(array $dataset, array $cols_only)
+    {
+        // $fillable = false;
+        // if ($this->is_nofillable) {
+        //     $fillable = true;
+        //     $this->nofillable(false);
+        // }
+
+        // $this->fillable = $cols_only;
+
+        // $this->fill($dataset);
+
+        // if ($fillable) {
+        //     $this->nofillable(false);
+        //     $fillable = false;
+        // }
+
+        $match   = false;
+        $dataset = (object) $dataset;
+
+        foreach ($cols_only as $v) {
+            if (property_exists($dataset, $v) && !isset($excludes[$v])) {
+                $this->_vars[$v] = $dataset->$v;
+                $match           = true;
+            }
+        }
+
+        if (!$match) {
+            die($this->print_sql_format("No data columns matched with \$cols_only - " . implode(", ", $cols_only)));
         }
 
         return $this;
@@ -306,31 +358,33 @@ trait OperateTrait
      * Key = $_POST['g'], $_POST['name'], Value = insert into aaa (gender, display_name) values ...
      *
      * @param array $keymap e.g: ["g" => "gender", "name" => "display_name"]
-     * @param array $data e.g: ["g" => "M", "name" => "Name"]; $_POST
+     * @param array $dataset Dataset (key and value) to insert into database.  e.g: $_POST or $dataset =["g" => "M", "name" => "Name"]; $_POST
      * @param array $excludes Ignore the key (mapped key name.  e.g: $keymaps = ["g" => "gender"], $excludes = ["gender"]) and do not save into database.  e.g: ["name", "gender"]
      * @return FDO
      */
-    public function fillmap(array $keymaps, array $data = null, array $excludes = null)
+    public function fillmap(array $keymaps, array $dataset = null, array $excludes = null)
     {
-        if (!is_array($data)) {
-            $data = $this->_post;
+        $this->nofillable();
+
+        if (!is_array($dataset)) {
+            $dataset = $this->_post;
         }
 
         $mapped = [];
 
-        foreach ($data as $k => $v) {
+        foreach ($dataset as $k => $v) {
             if (isset($keymaps[$k])) {
-                unset($data[$k]);
+                unset($dataset[$k]);
                 $mapped[$keymaps[$k]] = $v;
             } else {
                 $mapped[$k] = $v;
             }
         }
 
-        $data = &$mapped;
+        $dataset = &$mapped;
         unset($mapped);
 
-        return $this->fill($data, $excludes);
+        return $this->fill($dataset, $excludes);
     }
 
     /**
