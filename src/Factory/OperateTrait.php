@@ -287,11 +287,11 @@ trait OperateTrait
     }
 
     /**
-     * Save dataset data (maybe the dataset is huge) into database based on the specified data columns -- $cols
+     * Save dataset data (maybe the dataset is huge) into database based on the specified / selected / custom data columns -- $cols
      *
      * e.g:
      *
-     * $dataset = ["name" => "Tester", "email" => "tester@example", "gender" => "M"]
+     * $dataset = $_POST or array("name" => "Tester", "email" => "tester@example", "gender" => "M")
      * $cols_only = ["name", "gender"];
      *
      * From above example, only "name" and "gender" will be save into database whereas "email" will be ignored
@@ -335,7 +335,7 @@ trait OperateTrait
     }
 
     /**
-     * Declare the ORM key mapping and save into the database.
+     * Declare the ORM key mapping and save data into the database.
      *
      * Example: $_POST['name'], in DB it is "display_name", if using fill(), it will save to column "name" instead of currect name = "display_name"
      *
