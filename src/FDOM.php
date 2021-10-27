@@ -47,6 +47,7 @@ namespace honwei189\FDO;
 class FDOM
 {
     private static $instance        = null;
+    private static $manual_fill     = false;
     private static $parent_instance = null;
     private static $rc;
     // private $_methods = [];
@@ -249,7 +250,7 @@ class FDOM
 
         // return ( new static )::call("where", ["is_active", "1"])->fetch_mode(\PDO::FETCH_CLASS)->order_by("id", "desc");
 
-        return (new static)::call("where", ["is_active", "1"])->order_by("id", "desc");
+        return (new static )::call("where", ["is_active", "1"])->order_by("id", "desc");
     }
 
     /**
@@ -260,7 +261,12 @@ class FDOM
      */
     public static function save($data = null)
     {
-        self::build_save_update($data);
+        if (!self::$manual_fill) {
+            self::build_save_update($data);
+        }
+
+        self::$manual_fill = false;
+
         // self::call("debug");
         return self::call("save");
     }
@@ -296,7 +302,11 @@ class FDOM
             $id = self::$id;
         }
 
-        self::build_save_update();
+        if (!self::$manual_fill) {
+            self::build_save_update();
+        }
+
+        self::$manual_fill = false;
 
         if (!is_null($id)) {
             return self::call("by_id", $id)->update();
@@ -364,6 +374,10 @@ class FDOM
         // if (!is_value(self::$table)) {
         self::get_table();
         // }
+
+        if ($name == "fillonly") {
+            self::$manual_fill = true;
+        }
 
         return call_user_func_array(array(self::$instance, $name), $arguments);
     }
