@@ -1894,13 +1894,29 @@ class SQL
         $random = array_rand($colors, 1);
         $color  = $colors[$random];
 
-        echo "<blockquote class=\"$color\">
-                <h1><span class=\"grapefruit\">" . $string . "</span></h1>
-                <p></p>
+        if (is_value($additional_string)) {
+            echo "<blockquote class=\"$color\">
                 <code>
                 $additional_string
                 </code>
+                </blockquote>
+                <blockquote class=\"$color\">
+                <p></p>
+                <h1><span class=\"grapefruit\">" . $string . "</span></h1>
                 </blockquote>";
+        } else {
+            echo "<blockquote class=\"$color\">
+                <h1><span class=\"grapefruit\">" . $string . "</span></h1>
+                </blockquote>";
+        }
+
+        // echo "<blockquote class=\"$color\">
+        //         <h1><span class=\"grapefruit\">" . $string . "</span></h1>
+        //         <p></p>
+        //         <code>
+        //         $additional_string
+        //         </code>
+        //         </blockquote>";
 
         unset($colors);
         unset($color);
