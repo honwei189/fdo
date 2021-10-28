@@ -375,7 +375,7 @@ class FDOM
         self::get_table();
         // }
 
-        if ($name == "fillonly") {
+        if ($name == "fill" || $name == "fillmap" || $name == "fillonly") {
             self::$manual_fill = true;
         }
 
