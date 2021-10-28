@@ -287,6 +287,70 @@ trait OperateTrait
     }
 
     /**
+     * Declare the ORM key mapping and save data into the database.
+     * 
+     * or;
+     * 
+     * Replace the original inserted key name (e.g: $_POST['my_name']) to another ( e.g: display_name ) and save into database.
+     * 
+     *
+     * Example: $_POST['name'], in DB it is "display_name", if using fill(), it will save to column "name" instead of currect name = "display_name"
+     *
+     * insert into aaa (name) values ...
+     *
+     * After use fillmap(), it will save to column "display_name"
+     *
+     * insert into aaa (display_name) values ...
+     *
+     *
+     * Format :
+     *
+     * [ RAW_or_original_name => REAL_NAME_in_DB ]
+     *
+     * RAW_or_original_name = Input name / $_POST[ANY_NAME]
+     * REAL_NAME_in_DB = Real name in DB.  If leave it as blank, skip insert this into DB
+     *
+     * e.g: ["g" => "gender", "name" => "display_name", "email" => ""];
+     *
+     * Key = $_POST['g'], $_POST['name'], Value = insert into aaa (gender, display_name) values ...
+     *
+     * @param array $keymap e.g: ["g" => "gender", "name" => "display_name"]
+     * @param array $dataset Dataset (key and value) to insert into database.  e.g: $_POST or $dataset =["g" => "M", "name" => "Name"]; $_POST
+     * @param array $excludes Ignore the key (mapped key name.  e.g: $keymaps = ["g" => "gender"], $excludes = ["gender"]) and do not save into database.  e.g: ["name", "gender"]
+     * @return FDO
+     */
+    public function fillmap(array $keymaps, array $dataset = null, array $excludes = null)
+    {
+        $this->nofillable();
+
+        if (!is_array($dataset)) {
+            if (count($this->_vars) > 0) {
+                $dataset = $this->_vars;
+            } else {
+                $dataset = $this->_post;
+            }
+        }
+
+        $mapped = [];
+
+        foreach ($dataset as $k => $v) {
+            if (isset($keymaps[$k])) {
+                if (str($keymaps[$k])) {
+                    unset($dataset[$k]);
+                    $mapped[$keymaps[$k]] = $v;
+                }
+            } else {
+                $mapped[$k] = $v;
+            }
+        }
+
+        $dataset = &$mapped;
+        unset($mapped);
+
+        return $this->fill($dataset, $excludes);
+    }
+
+    /**
      * Save dataset data (maybe the dataset is huge) into database based on the specified / selected / custom data columns -- $cols
      *
      * e.g:
@@ -332,59 +396,6 @@ trait OperateTrait
         }
 
         return $this;
-    }
-
-    /**
-     * Declare the ORM key mapping and save data into the database.
-     *
-     * Example: $_POST['name'], in DB it is "display_name", if using fill(), it will save to column "name" instead of currect name = "display_name"
-     *
-     * insert into aaa (name) values ...
-     *
-     * After use fillmap(), it will save to column "display_name"
-     *
-     * insert into aaa (display_name) values ...
-     *
-     *
-     * Format :
-     *
-     * [key => value]
-     *
-     * Key = Input name / $_POST[ANY_NAME]
-     * Value = Real name in DB
-     *
-     * e.g: ["g" => "gender", "name" => "display_name"];
-     *
-     * Key = $_POST['g'], $_POST['name'], Value = insert into aaa (gender, display_name) values ...
-     *
-     * @param array $keymap e.g: ["g" => "gender", "name" => "display_name"]
-     * @param array $dataset Dataset (key and value) to insert into database.  e.g: $_POST or $dataset =["g" => "M", "name" => "Name"]; $_POST
-     * @param array $excludes Ignore the key (mapped key name.  e.g: $keymaps = ["g" => "gender"], $excludes = ["gender"]) and do not save into database.  e.g: ["name", "gender"]
-     * @return FDO
-     */
-    public function fillmap(array $keymaps, array $dataset = null, array $excludes = null)
-    {
-        $this->nofillable();
-
-        if (!is_array($dataset)) {
-            $dataset = $this->_post;
-        }
-
-        $mapped = [];
-
-        foreach ($dataset as $k => $v) {
-            if (isset($keymaps[$k])) {
-                unset($dataset[$k]);
-                $mapped[$keymaps[$k]] = $v;
-            } else {
-                $mapped[$k] = $v;
-            }
-        }
-
-        $dataset = &$mapped;
-        unset($mapped);
-
-        return $this->fill($dataset, $excludes);
     }
 
     /**
