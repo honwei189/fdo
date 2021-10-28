@@ -1896,7 +1896,7 @@ class SQL
 
         if (is_value($additional_string)) {
             echo "<blockquote class=\"$color\">
-                <code>
+                <code style=\"font-size: 1.5em;\">
                 $additional_string
                 </code>
                 </blockquote>
