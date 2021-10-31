@@ -374,7 +374,7 @@ trait QueryTrait
      */
     public function exist()
     {
-        return ((double) $this->count_by()->get() > 0 ? true : false);
+        return ((double) $this->count_by()->get()['count'] > 0 ? true : false);
     }
 
     public function fetch($rs)
