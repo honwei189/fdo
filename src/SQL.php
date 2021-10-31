@@ -409,11 +409,9 @@ class SQL
 
         switch ($name) {
             // case "action":
-            case "api_Key":
-            case "token":
-            case "key":
-            case "file":
-            case "id":
+            case "_token":
+            case "_method":
+            case "fillable":
                 break;
 
             default:
@@ -936,6 +934,15 @@ class SQL
         return $this;
     }
 
+    public function get_user_id()
+    {
+        if ($this->is_laravel) {
+            return "Auth"::id();
+        } else {
+            return $this->_user_id;
+        }
+    }
+
     /**
      * Is DB connected?
      *
@@ -1124,6 +1131,26 @@ class SQL
         $this->_set_encrypt_id = $bool;
 
         return $this;
+    }
+
+    /**
+     * Set what data to stores in database
+     *
+     * Applicable to add(), create(), save(), store(), update() only
+     *
+     * @param array|string $name
+     * @param array|string $value
+     * @return FDO
+     */
+    public function set_fill_data($name, $value)
+    {
+        if (is_array($name)) {
+            foreach ($name as $k => $v) {
+                $this->__set($v, (is_array($value) ? $value[$k] : $value));
+            }
+        } else {
+            $this->__set($name, (is_array($value) ? $value[0] : $value));
+        }
     }
 
     /**
