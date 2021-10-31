@@ -466,6 +466,12 @@ class FDOM
         }
 
         self::$instance->fetch_mode(\PDO::FETCH_ASSOC);
+
+        if (is_object(self::$instance) && self::$instance->is_laravel()) {
+            // self::prefill(["created_by", "created_at"], [self::get_user_id(), "now()"]);
+            // self::$instance->prefill(["created_by", "created_at", "updated_by", "updated_at"], [self::get_user_id(), "now()", self::get_user_id(), "now()"]);
+            self::$instance->prefill(["created_by", "created_at", "updated_by", "updated_at"], [self::$instance->get_user_id(), "now()", self::$instance->get_user_id(), "now()"]);
+        }
         return self::$instance;
     }
 }
