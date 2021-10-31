@@ -247,8 +247,9 @@ trait OperateTrait
 
                 foreach ($this->fillable as $v) {
                     if (property_exists($dataset, $v) && !isset($excludes[$v])) {
-                        $this->_vars[$v] = $dataset->$v;
-                        $match           = true;
+                        // $this->_vars[$v] = $dataset->$v;
+                        $this->set_fill_data($v, $dataset->$v);
+                        $match = true;
                     }
                 }
 
@@ -263,20 +264,26 @@ trait OperateTrait
         }
 
         if (isset($dataset) && is_array($dataset) && count($dataset) > 0) {
-            $this->_vars = [];
+            // $this->_vars = [];
+            // foreach ($dataset as $k => $v) {
+            //     switch ($k) {
+            //         case "_token":
+            //         case "_method":
+            //         case "fillable":
+            //             break;
+
+            //         default:
+            //             if (!isset($excludes[$k])) {
+            //                 // $this->_vars[$k] = $v;
+            //                 $this->set_fill_data($k, $v);
+            //             }
+            //             break;
+            //     }
+            // }
 
             foreach ($dataset as $k => $v) {
-                switch ($k) {
-                    case "_token":
-                    case "_method":
-                    case "fillable":
-                        break;
-
-                    default:
-                        if (!isset($excludes[$k])) {
-                            $this->_vars[$k] = $v;
-                        }
-                        break;
+                if (!isset($excludes[$k])) {
+                    $this->set_fill_data($k, $v);
                 }
             }
         } else {
@@ -288,11 +295,11 @@ trait OperateTrait
 
     /**
      * Declare the ORM key mapping and save data into the database.
-     * 
+     *
      * or;
-     * 
+     *
      * Replace the original inserted key name (e.g: $_POST['my_name']) to another ( e.g: display_name ) and save into database.
-     * 
+     *
      *
      * Example: $_POST['name'], in DB it is "display_name", if using fill(), it will save to column "name" instead of currect name = "display_name"
      *
@@ -326,6 +333,10 @@ trait OperateTrait
         if (!is_array($dataset)) {
             if (count($this->_vars) > 0) {
                 $dataset = $this->_vars;
+
+                if (is_array($dataset) && count($dataset) > 0) {
+                    $this->_vars = [];
+                }
             } else {
                 $dataset = $this->_post;
             }
@@ -430,6 +441,20 @@ trait OperateTrait
     public function notfillable(bool $bool = true)
     {
         return $this->nofillable($bool);
+    }
+
+    /**
+     * Pre-defined what data to stores in database.  Alias of set_fill_data()
+     *
+     * Applicable to add(), create(), save(), store(), update() only
+     *
+     * @param array|string $name
+     * @param array|string $value
+     * @return FDO
+     */
+    public function prefill($name, $value)
+    {
+        return $this->set_fill_data($name, $value);
     }
 
     /**
