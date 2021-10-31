@@ -31,6 +31,7 @@ namespace honwei189\FDO\Factory;
 trait OperateTrait
 {
     public $fillable;
+    private $prefill       = [];
     private $is_nofillable = false;
     private $_vars         = [];
 
@@ -454,7 +455,17 @@ trait OperateTrait
      */
     public function prefill($name, $value)
     {
-        return $this->set_fill_data($name, $value);
+        if (is_array($name)) {
+            foreach ($name as $k => $v) {
+                $this->prefill[$v] = (is_array($value) ? $value[$k] : $value);
+            }
+        } else {
+            $this->prefill[$name] = (is_array($value) ? $value[0] : $value);
+        }
+
+        // return $this->set_fill_data($name, $value);
+
+        return $this;
     }
 
     /**
@@ -491,6 +502,9 @@ trait OperateTrait
                     $sql_where = $this->_where;
                 }
             }
+
+            // $this->_vars = [...$this->_vars, ...$this->prefill];
+            $this->_vars = array_merge($this->_vars, $this->prefill);
 
             if (!is_value($sql_where)) {
                 $new_data = true;
@@ -785,6 +799,8 @@ trait OperateTrait
     public function store()
     {
         if (is_array($this->_vars) && count($this->_vars) > 0) {
+            $this->_vars = array_merge($this->_vars, $this->prefill);
+
             $keys = array_keys($this->_vars);
             $raws = $this->_vars;
             unset($this->{"deldate"});
@@ -969,6 +985,8 @@ trait OperateTrait
         }
 
         if (is_array($this->_vars) && count($this->_vars) > 0) {
+            $this->_vars = array_merge($this->_vars, $this->prefill);
+
             $keys = array_keys($this->_vars);
             $raws = $this->_vars;
 
