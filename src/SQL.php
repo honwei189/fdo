@@ -1778,137 +1778,146 @@ class SQL
     {
         echo "<style>
                 blockquote{
-                display:block;
-                background: #fff;
-                padding: 15px 20px 15px 45px;
-                margin: 0 0 20px;
-                position: relative;
+                    display:block;
+                    background: #fff;
+                    padding: 15px 20px 15px 45px;
+                    margin: 0 0 20px;
+                    position: relative;
 
-                /*Font*/
-                font-family: Georgia, serif;
-                font-size: 14px;
-                line-height: 1.2;
-                color: #666;
+                    /*Font*/
+                    font-family: Georgia, serif;
+                    font-size: 14px;
+                    line-height: 1.2;
+                    color: #666;
 
-                /*Box Shadow - (Optional)*/
-                -moz-box-shadow: 2px 2px 15px #ccc;
-                -webkit-box-shadow: 2px 2px 15px #ccc;
-                box-shadow: 2px 2px 15px #ccc;
+                    /*Box Shadow - (Optional)*/
+                    -moz-box-shadow: 2px 2px 15px #ccc;
+                    -webkit-box-shadow: 2px 2px 15px #ccc;
+                    box-shadow: 2px 2px 15px #ccc;
 
-                /*Borders - (Optional)*/
-                border-left-style: solid;
-                border-left-width: 15px;
-                border-right-style: solid;
-                border-right-width: 2px;
+                    /*Borders - (Optional)*/
+                    border-left-style: solid;
+                    border-left-width: 15px;
+                    border-right-style: solid;
+                    border-right-width: 2px;
                 }
 
                 blockquote::before{
-                content: \"\\201C\"; /*Unicode for Left Double Quote*/
+                    content: \"\\201C\"; /*Unicode for Left Double Quote*/
 
-                /*Font*/
-                font-family: Georgia, serif;
-                font-size: 60px;
-                font-weight: bold;
-                color: #999;
+                    /*Font*/
+                    font-family: Georgia, serif;
+                    font-size: 60px;
+                    font-weight: bold;
+                    color: #999;
 
-                /*Positioning*/
-                position: absolute;
-                left: 10px;
-                top:5px;
-
+                    /*Positioning*/
+                    position: absolute;
+                    left: 10px;
+                    top:5px;
                 }
 
                 blockquote::after{
                 /*Reset to make sure*/
-                content: \"\";
+                    content: \"\";
                 }
 
                 blockquote a{
-                text-decoration: none;
-                background: #eee;
-                cursor: pointer;
-                padding: 0 3px;
-                color: #c76c0c;
+                    text-decoration: none;
+                    background: #eee;
+                    cursor: pointer;
+                    padding: 0 3px;
+                    color: #c76c0c;
                 }
 
                 blockquote a:hover{
-                color: #666;
+                    color: #666;
                 }
 
                 blockquote em{
-                font-style: italic;
+                    font-style: italic;
                 }
 
                 /*Default Color Palette*/
                 blockquote.default{
-                border-left-color: #656d77;
-                border-right-color: #434a53;
+                    border-left-color: #656d77;
+                    border-right-color: #434a53;
                 }
 
                 /*Grapefruit Color Palette*/
                 blockquote.grapefruit{
-                border-left-color: #ed5565;
-                border-right-color: #da4453;
+                    border-left-color: #ed5565;
+                    border-right-color: #da4453;
                 }
 
                 /*Bittersweet Color Palette*/
                 blockquote.bittersweet{
-                border-left-color: #fc6d58;
-                border-right-color: #e95546;
+                    border-left-color: #fc6d58;
+                    border-right-color: #e95546;
                 }
 
                 /*Sunflower Color Palette*/
                 blockquote.sunflower{
-                border-left-color: #ffcd69;
-                border-right-color: #f6ba59;
+                    border-left-color: #ffcd69;
+                    border-right-color: #f6ba59;
                 }
 
                 /*Grass Color Palette*/
                 blockquote.grass{
-                border-left-color: #9fd477;
-                border-right-color: #8bc163;
+                    border-left-color: #9fd477;
+                    border-right-color: #8bc163;
                 }
 
                 /*Mint Color Palette*/
                 blockquote.mint{
-                border-left-color: #46cfb0;
-                border-right-color: #34bc9d;
+                    border-left-color: #46cfb0;
+                    border-right-color: #34bc9d;
                 }
 
                 /*Aqua Color Palette*/
                 blockquote.aqua{
-                border-left-color: #4fc2e5;
-                border-right-color: #3bb0d6;
+                    border-left-color: #4fc2e5;
+                    border-right-color: #3bb0d6;
                 }
 
                 /*Blue Jeans Color Palette*/
                 blockquote.bluejeans{
-                border-left-color: #5e9de6;
-                border-right-color: #4b8ad6;
+                    border-left-color: #5e9de6;
+                    border-right-color: #4b8ad6;
                 }
 
                 /*Lavander Color Palette*/
                 blockquote.lavander{
-                border-left-color: #ad93e6;
-                border-right-color: #977bd5;
+                    border-left-color: #ad93e6;
+                    border-right-color: #977bd5;
                 }
 
                 /*Pinkrose Color Palette*/
                 blockquote.pinkrose{
-                border-left-color: #ed87bd;
-                border-right-color: #d870a9;
+                    border-left-color: #ed87bd;
+                    border-right-color: #d870a9;
                 }
 
                 /*Light Color Palette*/
                 blockquote.light{
-                border-left-color: #f5f7fa;
-                border-right-color: #e6e9ed;
+                    border-left-color: #f5f7fa;
+                    border-right-color: #e6e9ed;
                 }
 
                 /*Gray Color Palette*/
                 blockquote.gray{
-                border-left-color: #ccd1d8;
-                border-right-color: #aab2bc;
+                    border-left-color: #ccd1d8;
+                    border-right-color: #aab2bc;
+                }
+
+                blockquote.random{
+                    border-left-color: ".sprintf('#%06X', mt_rand(0, 0xFFFFFF)).";
+                    border-right-color: #".substr(str_shuffle('AABBCCDDEEFF00112233445566778899AABBCCDDEEFF00112233445566778899AABBCCDDEEFF00112233445566778899'), 0, 6).";
+                }
+
+                blockquote.random-sql{
+                    border-left-color: #".substr(str_shuffle('AABBCCDDEEFF00112233445566778899AABBCCDDEEFF00112233445566778899AABBCCDDEEFF00112233445566778899'), 0, 6).";
+                    border-right-color: ".sprintf('#%06X', mt_rand(0, 0xFFFFFF)).";
                 }
                 </style>
                         ";
@@ -1929,7 +1938,8 @@ class SQL
         ];
 
         $random = array_rand($colors, 1);
-        $color  = $colors[$random];
+        // $color  = $colors[$random];
+        $color = "random";
 
         if (is_value($additional_string)) {
             echo "<blockquote class=\"$color\">
@@ -1937,7 +1947,7 @@ class SQL
                 $additional_string
                 </code>
                 </blockquote>
-                <blockquote class=\"$color\">
+                <blockquote class=\"$color-sql\">
                 <p></p>
                 <h1><span class=\"grapefruit\">" . $string . "</span></h1>
                 </blockquote>";
