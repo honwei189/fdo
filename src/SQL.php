@@ -1006,6 +1006,16 @@ class SQL
     }
 
     /**
+     * Check is under Laravel platform
+     *
+     * @return bool
+     */
+    public function is_laravel(): bool
+    {
+        return (bool) $this->is_laravel;
+    }
+
+    /**
      * @param boolean $bool
      */
     public function is_set_encrypt_id()
