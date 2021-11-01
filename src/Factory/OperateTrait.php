@@ -397,7 +397,7 @@ trait OperateTrait
         $dataset = (object) $dataset;
 
         foreach ($cols_only as $v) {
-            if (property_exists($dataset, $v) && !isset($excludes[$v])) {
+            if (property_exists($dataset, $v)) {
                 $this->_vars[$v] = $dataset->$v;
                 $match           = true;
             }
