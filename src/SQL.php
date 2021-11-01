@@ -621,6 +621,7 @@ class SQL
         $this->_table_joins_table      = null;
         $this->_table_left_joins       = null;
         $this->_table_left_joins_table = null;
+        $this->_vars                   = null;
         $this->username                = null;
         $this->user_id                 = null;
         $this->user_only               = null;
@@ -900,13 +901,17 @@ class SQL
     }
 
     /**
-     * Convert encrypted id to integer
+     * Get DB inserted ID ( after called save(), store() ) or Convert encrypted id to integer
      *
-     * @param string $string
+     * @param string $string Encrypted ID.  If passing as null, get DB inserted ID
      * @return int
      */
-    public function get_id($string)
+    public function get_id(?string $string = null): int
     {
+        if (is_null($string)) {
+            return (int) $this->_id;
+        }
+
         return (int) flayer::Crypto()->decrypt($string);
     }
 
@@ -941,6 +946,15 @@ class SQL
         } else {
             return $this->_user_id;
         }
+    }
+
+    /**
+     * Get inserted ID from DB by after called save(), store()
+     * @return int
+     */
+    public function id(): int
+    {
+        return (int) $this->_id;
     }
 
     /**
@@ -1911,13 +1925,13 @@ class SQL
                 }
 
                 blockquote.random{
-                    border-left-color: ".sprintf('#%06X', mt_rand(0, 0xFFFFFF)).";
-                    border-right-color: #".substr(str_shuffle('AABBCCDDEEFF00112233445566778899AABBCCDDEEFF00112233445566778899AABBCCDDEEFF00112233445566778899'), 0, 6).";
+                    border-left-color: " . sprintf('#%06X', mt_rand(0, 0xFFFFFF)) . ";
+                    border-right-color: #" . substr(str_shuffle('AABBCCDDEEFF00112233445566778899AABBCCDDEEFF00112233445566778899AABBCCDDEEFF00112233445566778899'), 0, 6) . ";
                 }
 
                 blockquote.random-sql{
-                    border-left-color: #".substr(str_shuffle('AABBCCDDEEFF00112233445566778899AABBCCDDEEFF00112233445566778899AABBCCDDEEFF00112233445566778899'), 0, 6).";
-                    border-right-color: ".sprintf('#%06X', mt_rand(0, 0xFFFFFF)).";
+                    border-left-color: #" . substr(str_shuffle('AABBCCDDEEFF00112233445566778899AABBCCDDEEFF00112233445566778899AABBCCDDEEFF00112233445566778899'), 0, 6) . ";
+                    border-right-color: " . sprintf('#%06X', mt_rand(0, 0xFFFFFF)) . ";
                 }
                 </style>
                         ";
