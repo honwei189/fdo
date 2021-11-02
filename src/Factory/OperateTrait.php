@@ -223,14 +223,31 @@ trait OperateTrait
      *
      * or;
      *
+     * $fdo->fill("name", "Tester");
+     *
+     * or;
+     *
      * FDOM::fill(["name" => "Tester", "email" => "tester@example"]);
      *
-     * @param array $dataset Dataset (key and value) to insert into database.  e.g: $_POST or $dataset = ["name" => "Tester", "email" => "tester@example"]
-     * @param array $excludes Ignore the key and do not save into database.  e.g: ["name", "gender"]
+     * @param array|string $dataset DB column name or Dataset (key and value) to insert into database.  e.g: $_POST or $dataset = ["name" => "Tester", "email" => "tester@example"]
+     * @param array|string $excludes Data value ( if $dataset is string ) or Ignore list.  Ignore the key and do not save into database.  e.g: ["name", "gender"]
      * @return FDO
      */
-    public function fill(array $dataset, array $excludes = null)
+    public function fill($dataset, $excludes = null)
     {
+        if (is_string($dataset) && !is_null($excludes) && !is_array($excludes)) {
+            $this->set_fill_data($dataset, $excludes);
+            return $this;
+        }
+
+        if (!is_array($dataset)) {
+            die("First argument must be an array");
+        }
+
+        if (!is_null($excludes) && !is_array($excludes)) {
+            die("Second argument must be an array");
+        }
+
         if (is_array($excludes) && count($excludes) > 0) {
             $excludes = array_flip($excludes);
         }
@@ -594,7 +611,6 @@ trait OperateTrait
                 unset($this->{"deleteby"});
                 unset($this->{"dby"});
                 unset($this->{"deleted_by"});
-
                 unset($this->{"deleted_at"});
 
                 $keys = array_keys($this->_vars);
@@ -801,8 +817,6 @@ trait OperateTrait
         if (is_array($this->_vars) && count($this->_vars) > 0) {
             $this->_vars = array_merge($this->_vars, $this->prefill);
 
-            $keys = array_keys($this->_vars);
-            $raws = $this->_vars;
             unset($this->{"deldate"});
             unset($this->{"deletedate"});
             unset($this->{"dldt"});
@@ -821,6 +835,9 @@ trait OperateTrait
             unset($this->{"updatedate"});
             unset($this->{"updated_at"});
             unset($this->{"updated_by"});
+
+            $keys = array_keys($this->_vars);
+            $raws = $this->_vars;
 
             // foreach ($this->_vars as $k => $v) {
             //     if (str($v)) {
@@ -987,9 +1004,6 @@ trait OperateTrait
         if (is_array($this->_vars) && count($this->_vars) > 0) {
             $this->_vars = array_merge($this->_vars, $this->prefill);
 
-            $keys = array_keys($this->_vars);
-            $raws = $this->_vars;
-
             if ($sql_where === null) {
                 if (!str($this->_where)) {
                     $sql_where = ($this->user_only && is_int($this->user_id) ? "created_by = " . $this->user_id . " and " : "") . "id = " . (int) $this->_id;
@@ -1035,6 +1049,9 @@ trait OperateTrait
             unset($this->{"created_by"});
             unset($this->{"fillable"});
             unset($this->_vars['fillable']);
+
+            $keys = array_keys($this->_vars);
+            $raws = $this->_vars;
 
             // foreach ($this->_vars as $k => $v) {
             //     if (str($v)) {
