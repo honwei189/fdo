@@ -1047,11 +1047,26 @@ class SQL
         return $this->_soft_update;
     }
 
+    /**
+     * Checks if a transaction is currently active
+     *
+     * @return bool
+     */
+    public function is_transaction()
+    {
+        return (bool) $this->instance->inTransaction();
+    }
+
+    /**
+     * Get last insert ID from DB.  Alternative function is get_id(), id()
+     *
+     * @return int
+     */
     public function last_id()
     {
         if (!empty($this->instance)) {
             $this->_id = $this->instance->lastInsertId();
-            return $this->_id;
+            return (int) $this->_id;
         }
     }
 
