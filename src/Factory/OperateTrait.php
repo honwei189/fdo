@@ -197,6 +197,8 @@ trait OperateTrait
                 $this->affected_Rows = $rs->execute();
                 $rs->setFetchMode(\PDO::FETCH_NUM);
             } catch (\PDOException $e) {
+                $this->rollback();
+
                 ob_start();
                 print_r($e->errorInfo);
                 $except = new \Exception;
@@ -705,7 +707,7 @@ trait OperateTrait
                 } else {
                     if ($this->_soft_update) {
                         if (!$this->_trx) {
-                            $this->Begin();
+                            $this->begin();
                         }
                     }
 
