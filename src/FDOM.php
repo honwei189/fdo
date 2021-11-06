@@ -287,7 +287,7 @@ class FDOM
             $id = self::call("get_id", $id);
         }
 
-        return self::call("by_id", $id)->read();
+        return self::call("by_id", $id)->debug(false)->read();
     }
 
     /**

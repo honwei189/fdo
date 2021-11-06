@@ -909,7 +909,8 @@ class SQL
     public function get_id(?string $string = null): int
     {
         if (is_null($string)) {
-            return (int) $this->_id;
+            // return (int) $this->_id;
+            return (int) $this->last_id();
         }
 
         return (int) flayer::Crypto()->decrypt($string);
@@ -954,7 +955,8 @@ class SQL
      */
     public function id(): int
     {
-        return (int) $this->_id;
+        // return (int) $this->_id;
+        return $this->last_id();
     }
 
     /**
