@@ -314,6 +314,22 @@ trait OperateTrait
     }
 
     /**
+     * Set what data to stores in database
+     *
+     * Alias of set_fill_data()
+     *
+     * Applicable to add(), create(), save(), store(), update() only
+     *
+     * @param array|string $name
+     * @param array|string $value
+     * @return FDO
+     */
+    public function fill_data($name, $value)
+    {
+        return $this->set_fill_data($name, $value);
+    }
+
+    /**
      * Declare the ORM key mapping and save data into the database.
      *
      * or;
