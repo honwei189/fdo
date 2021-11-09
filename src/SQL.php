@@ -1192,6 +1192,8 @@ class SQL
         } else {
             $this->__set($name, (is_array($value) ? $value[0] : $value));
         }
+
+        return $this;
     }
 
     /**
