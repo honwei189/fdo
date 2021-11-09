@@ -238,6 +238,7 @@ trait OperateTrait
     public function fill($dataset, $excludes = null)
     {
         if (is_string($dataset) && !is_null($excludes) && !is_array($excludes)) {
+            $excludes = $this->convert_bracket($excludes);
             $this->set_fill_data($dataset, $excludes);
             return $this;
         }
@@ -263,6 +264,7 @@ trait OperateTrait
         if (!$this->is_nofillable) {
             if (is_array($this->fillable) && count($this->fillable) > 0) {
                 $match   = false;
+                $dataset = $this->convert_bracket($dataset);
                 $dataset = (object) $dataset;
 
                 foreach ($this->fillable as $v) {
@@ -300,6 +302,8 @@ trait OperateTrait
             //             break;
             //     }
             // }
+
+            $dataset = $this->convert_bracket($dataset);
 
             foreach ($dataset as $k => $v) {
                 if (!isset($excludes[$k])) {
@@ -394,7 +398,8 @@ trait OperateTrait
             }
         }
 
-        $mapped = [];
+        $mapped  = [];
+        // $dataset = $this->convert_bracket($dataset);
 
         foreach ($dataset as $k => $v) {
             if (isset($keymaps[$k])) {

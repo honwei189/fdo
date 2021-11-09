@@ -1761,6 +1761,26 @@ class SQL
                     // case (preg_match('/(adddate|addtime|convert_tz|date_add|date_format|date_diff|date_sub|day|dayname|dayofmonth|dayofweek|dayofyear|extract|from_days|from_unixtime|get_format|hour|last_day|makedate|maketime|microsecond|minute|month|monthname|period_add|period_diff|quarter|sec_to_time|second|str_to_date|subdate|subtime|time|time_format|time_to_sec|timediff|timestamp|timestampadd|timestampdiff|to_days|to_seconds|unix_timestamp|utc_date|utc_time|utc_timestamp|week|yearweek|weekday|weekofyear|year|yearweek)\((.?)\)($|\s|\b)/siU', $attr) ? true : false):
                     // case (preg_match('/\s*\((^|\s|\b)(?!case\s\S)(.*?)\)\s*+/siU', $attr) ? true : false):
                     // case (preg_match("/(?:(?:^(?!.*\bcase\b)|\G(?!\A)).*?)\K\b(?:\(|\))\b/gm", $attr, $reg) ? true : false):
+
+                    if (
+                        !preg_match("/^\(select\s+(?<columns>.*?)\s+from\s+(.*?)?((where\s+(?<where>.*?))?(order by\s+(?<order>.*?))?(limit\s+(?<limit>(.*?)))?)$/sm", $attr)
+                        &&
+                        !preg_match('/\s*\((^|\s|\b)(case when\s\S)(.*?)\)\s*+/siU', $attr)
+                    ) {
+                        preg_match('/^\((.*)\s*\)/siU', $attr, $reg); // To find out " ( ANY WORDS ) ", to determine it is string or mySQL operation
+
+                        if ($reg[0] ?? false) {
+                            $a = str_replace($reg[0], "", $attr); // After filtered " ( ANY WORDS ) " and still not blank, treat it as string instead of mySQL operation
+
+                            if ($a ?? false) {
+                                unset($a);
+                                return "'" . trim(addslashes($attr)) . "'";
+                            }
+                        }
+
+                        unset($reg);
+                    }
+
                     return trim($attr);
                     break;
 
@@ -1773,6 +1793,7 @@ class SQL
                     break;
 
                 default:
+                    $attr = $this->convert_bracket($attr, true);
                     return trim("'" . addslashes($attr) . "'");
                     break;
             }
@@ -1798,6 +1819,100 @@ class SQL
             } else {
                 return "null";
             }
+        }
+    }
+
+    /**
+     * Convert brackets to HTML code, or convert bracket HTML code to bracket
+     *
+     * @param array|string $inputs
+     * @param bool $reverse
+     * @return array|string
+     */
+    private function convert_bracket($inputs, $reverse = false)
+    {
+        // $search = array(
+        //     "'\('i",
+        //     "'\)'i",
+        //     "'&#40;'i",
+        //     "'&#41;'i",
+        //     "'^\s+|\s+$'", //trim whitespace from beginning and end
+        // );
+
+        // $replace = array(
+        //     "&#40;",
+        //     "&#41;",
+        //     "(",
+        //     ")",
+        //     "",
+        // );
+
+        // if (a($inputs)) {
+        //     foreach ($inputs as $k => $v) {
+        //         $inputs[$k] = preg_replace($search, $replace, $v);
+        //     }
+
+        //     return $inputs;
+        // } else {
+        //     return preg_replace($search, $replace, $inputs);
+        // }
+
+        if (a($inputs)) {
+            foreach ($inputs as $k => $v) {
+                if ($reverse) {
+                    $inputs[$k] = preg_replace(["'&#40;'i", "'&#41;'i", "'^\s+|\s+$'"], ["(", ")", ""], $v);
+                } else {
+                    $inputs[$k] = preg_replace(["'\('i", "'\)'i", "'^\s+|\s+$'"], ["&#40;", "&#41;", ""], $v);
+                }
+            }
+
+            return $inputs;
+        } else {
+            if ($reverse) {
+                return str_replace(["&#40;", "&#41;"], ["(", ")"], trim($inputs));
+            } else {
+                return str_replace(["(", ")"], ["&#40;", "&#41;"], trim($inputs));
+            }
+        }
+    }
+
+    /**
+     * Filter string to HTML or unix and remove whitespace
+     *
+     * @param array|string $inputs
+     * @return array|string
+     */
+    private function filter_html($inputs)
+    {
+        $search = array(
+            "'\('i",
+            "'\)'i",
+            "'^\s+|\s+$'", //trim whitespace from beginning and end
+            "'&(quot|#10);'i", // Replace br
+            "'&(quot|#60);br&(quot|#62);'i", // Replace br
+            "'&(amp|#38);'i",
+            "'&(copy|#169);'i",
+        );
+
+        $replace = array(
+            "&#40;",
+            "&#41;",
+            "",
+            "",
+            PHP_EOL,
+            PHP_EOL,
+            "&",
+            chr(169),
+        );
+
+        if (a($inputs)) {
+            foreach ($inputs as $k => $v) {
+                $inputs[$k] = preg_replace($search, $replace, $v);
+            }
+
+            return $inputs;
+        } else {
+            return preg_replace($search, $replace, $inputs);
         }
     }
 
