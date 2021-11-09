@@ -324,6 +324,22 @@ trait OperateTrait
      * @param array|string $value
      * @return FDO
      */
+    public function filldata($name, $value)
+    {
+        return $this->set_fill_data($name, $value);
+    }
+
+    /**
+     * Set what data to stores in database
+     *
+     * Alias of set_fill_data()
+     *
+     * Applicable to add(), create(), save(), store(), update() only
+     *
+     * @param array|string $name
+     * @param array|string $value
+     * @return FDO
+     */
     public function fill_data($name, $value)
     {
         return $this->set_fill_data($name, $value);
