@@ -326,10 +326,15 @@ trait OperateTrait
      *
      * @param array|string $name
      * @param array|string $value
+     * @param bool $mysql_operator_symbol Is the value are mySQL operators ?  e.g: ( )
      * @return FDO
      */
-    public function filldata($name, $value)
+    public function filldata($name, $value, $mysql_operator_symbol = false)
     {
+        if (!$mysql_operator_symbol) {
+            $value = $this->convert_bracket($value);
+        }
+
         return $this->set_fill_data($name, $value);
     }
 
@@ -342,10 +347,15 @@ trait OperateTrait
      *
      * @param array|string $name
      * @param array|string $value
+     * @param bool $mysql_operator_symbol Is the value are mySQL operators ?  e.g: ( )
      * @return FDO
      */
-    public function fill_data($name, $value)
+    public function fill_data($name, $value, $mysql_operator_symbol = false)
     {
+        if (!$mysql_operator_symbol) {
+            $value = $this->convert_bracket($value);
+        }
+
         return $this->set_fill_data($name, $value);
     }
 
@@ -398,7 +408,7 @@ trait OperateTrait
             }
         }
 
-        $mapped  = [];
+        $mapped = [];
         // $dataset = $this->convert_bracket($dataset);
 
         foreach ($dataset as $k => $v) {
@@ -450,6 +460,7 @@ trait OperateTrait
         // }
 
         $match   = false;
+        $dataset = $this->convert_bracket($dataset);
         $dataset = (object) $dataset;
 
         foreach ($cols_only as $v) {

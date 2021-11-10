@@ -1782,6 +1782,11 @@ class SQL
                     //     unset($reg);
                     // }
 
+                    if (!preg_match('/^\(((?!.*\()|(?!.*\))).*?\)$/', $attr)) {
+                        // if found more than one " ( " and " ) ", treat it as string instead of mySQL operators / function
+                        return "'" . trim(addslashes($attr)) . "'";
+                    }
+
                     return trim($attr);
                     break;
 
