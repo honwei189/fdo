@@ -1757,29 +1757,30 @@ class SQL
                 case (preg_match('/\s*\((^|\s|\b)(case when\s\S)(.*?)\)\s*+/siU', $attr) ? true : false): // check the string is "case when"
                 // case (preg_match("/^\(\w+\)($|\b)|(\w+)\(\)|^\w+\((?!case\s\S)(.*?)\)$/isU", $attr) ? true : false):
                 case (preg_match("/^\(\S.*\)($|\b)|(\w+)\(\)|^\w+\((?!case\s\S)(.*?)\)$/isU", $attr) ? true : false): //Check FUNCTION(), FUNCTION(table_field, value), operator -- (1 + 2) or string contains "(" and ")"
+                case (preg_match('/^\S*\(.*\)$/siU', $attr) ? true : false): // Check is function with arguments.  e.g: date_add(now(), INTERVAL 1 HOUR)
                     // case (preg_match("/^\(\w+\)($|\b)|(\w+)\(\)/isU", $attr) ? true : false):
                     // case (preg_match('/(adddate|addtime|convert_tz|date_add|date_format|date_diff|date_sub|day|dayname|dayofmonth|dayofweek|dayofyear|extract|from_days|from_unixtime|get_format|hour|last_day|makedate|maketime|microsecond|minute|month|monthname|period_add|period_diff|quarter|sec_to_time|second|str_to_date|subdate|subtime|time|time_format|time_to_sec|timediff|timestamp|timestampadd|timestampdiff|to_days|to_seconds|unix_timestamp|utc_date|utc_time|utc_timestamp|week|yearweek|weekday|weekofyear|year|yearweek)\((.?)\)($|\s|\b)/siU', $attr) ? true : false):
                     // case (preg_match('/\s*\((^|\s|\b)(?!case\s\S)(.*?)\)\s*+/siU', $attr) ? true : false):
                     // case (preg_match("/(?:(?:^(?!.*\bcase\b)|\G(?!\A)).*?)\K\b(?:\(|\))\b/gm", $attr, $reg) ? true : false):
 
-                    if (
-                        !preg_match("/^\(select\s+(?<columns>.*?)\s+from\s+(.*?)?((where\s+(?<where>.*?))?(order by\s+(?<order>.*?))?(limit\s+(?<limit>(.*?)))?)$/sm", $attr)
-                        &&
-                        !preg_match('/\s*\((^|\s|\b)(case when\s\S)(.*?)\)\s*+/siU', $attr)
-                    ) {
-                        preg_match('/^\((.*)\s*\)/siU', $attr, $reg); // To find out " ( ANY WORDS ) ", to determine it is string or mySQL operation
+                    // if (
+                    //     !preg_match("/^\(select\s+(?<columns>.*?)\s+from\s+(.*?)?((where\s+(?<where>.*?))?(order by\s+(?<order>.*?))?(limit\s+(?<limit>(.*?)))?)$/sm", $attr)
+                    //     &&
+                    //     !preg_match('/\s*\((^|\s|\b)(case when\s\S)(.*?)\)\s*+/siU', $attr)
+                    // ) {
+                    //     preg_match('/^\((.*)\s*\)/siU', $attr, $reg); // To find out " ( ANY WORDS ) ", to determine it is string or mySQL operation
 
-                        if ($reg[0] ?? false) {
-                            $a = str_replace($reg[0], "", $attr); // After filtered " ( ANY WORDS ) " and still not blank, treat it as string instead of mySQL operation
+                    //     if ($reg[0] ?? false) {
+                    //         $a = str_replace($reg[0], "", $attr); // After filtered " ( ANY WORDS ) " and still not blank, treat it as string instead of mySQL operation
 
-                            if ($a ?? false) {
-                                unset($a);
-                                return "'" . trim(addslashes($attr)) . "'";
-                            }
-                        }
+                    //         if ($a ?? false) {
+                    //             unset($a);
+                    //             return "'" . trim(addslashes($attr)) . "'";
+                    //         }
+                    //     }
 
-                        unset($reg);
-                    }
+                    //     unset($reg);
+                    // }
 
                     return trim($attr);
                     break;
