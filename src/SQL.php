@@ -613,6 +613,7 @@ class SQL
         $this->_group_by               = "";
         $this->_limit                  = "";
         $this->_max_by                 = "";
+        $this->_mysql_operator_symbol  = [];
         $this->_sql                    = "";
         $this->_table_cols             = "";
         $this->_table_cols_nums        = 0;
@@ -1865,19 +1866,24 @@ class SQL
 
         if (a($inputs)) {
             foreach ($inputs as $k => $v) {
-                if ($reverse) {
-                    $inputs[$k] = preg_replace(["'&#40;'i", "'&#41;'i", "'^\s+|\s+$'"], ["(", ")", ""], $v);
-                } else {
-                    $inputs[$k] = preg_replace(["'\('i", "'\)'i", "'^\s+|\s+$'"], ["&#40;", "&#41;", ""], $v);
+                if (!($this->_mysql_operator_symbol[$k] ?? false)) {
+                    if ($reverse) {
+                        $inputs[$k] = preg_replace(["'&#40;'i", "'&#41;'i", "'^\s+|\s+$'"], ["(", ")", ""], $v);
+                    } else {
+                        $inputs[$k] = preg_replace(["'\('i", "'\)'i", "'^\s+|\s+$'"], ["&#40;", "&#41;", ""], $v);
+                    }
                 }
             }
 
             return $inputs;
         } else {
-            if ($reverse) {
-                return str_replace(["&#40;", "&#41;"], ["(", ")"], trim($inputs));
+            if ($this->_mysql_operator_symbol[$inputs] ?? false) {
             } else {
-                return str_replace(["(", ")"], ["&#40;", "&#41;"], trim($inputs));
+                if ($reverse) {
+                    return str_replace(["&#40;", "&#41;"], ["(", ")"], trim($inputs));
+                } else {
+                    return str_replace(["(", ")"], ["&#40;", "&#41;"], trim($inputs));
+                }
             }
         }
     }

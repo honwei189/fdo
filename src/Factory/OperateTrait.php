@@ -31,9 +31,10 @@ namespace honwei189\FDO\Factory;
 trait OperateTrait
 {
     public $fillable;
-    private $prefill       = [];
-    private $is_nofillable = false;
-    private $_vars         = [];
+    private $prefill                = [];
+    private $is_nofillable          = false;
+    private $_vars                  = [];
+    private $_mysql_operator_symbol = [];
 
     /**
      * @access private
@@ -233,11 +234,16 @@ trait OperateTrait
      *
      * @param array|string $dataset DB column name or Dataset (key and value) to insert into database.  e.g: $_POST or $dataset = ["name" => "Tester", "email" => "tester@example"]
      * @param array|string $excludes Data value ( if $dataset is string ) or Ignore list.  Ignore the key and do not save into database.  e.g: ["name", "gender"]
+     * @param bool $mysql_operator_symbol Is the value are mySQL operators ?  e.g: ( )
      * @return FDO
      */
-    public function fill($dataset, $excludes = null)
+    public function fill($dataset, $excludes = null, $mysql_operator_symbol = false)
     {
         if (is_string($dataset) && !is_null($excludes) && !is_array($excludes)) {
+            if ($mysql_operator_symbol) {
+                $this->_mysql_operator_symbol[$dataset] = $dataset;
+            }
+
             $excludes = $this->convert_bracket($excludes);
             $this->set_fill_data($dataset, $excludes);
             return $this;
@@ -260,6 +266,20 @@ trait OperateTrait
         } else if ($this->is_laravel && !is_value($this->parent)) {
             $this->is_nofillable = true;
         }
+
+        // if ($mysql_operator_symbol) {
+        //     if (a($dataset)) {
+        //         foreach ($dataset as $k => $v) {
+        //             if (is_string($k)) {
+        //                 $this->_mysql_operator_symbol[$k] = $k;
+        //             }
+        //         }
+        //     } else {
+        //         if (is_string($dataset)) {
+        //             $this->_mysql_operator_symbol[$dataset] = $dataset;
+        //         }
+        //     }
+        // }
 
         if (!$this->is_nofillable) {
             if (is_array($this->fillable) && count($this->fillable) > 0) {
@@ -333,6 +353,18 @@ trait OperateTrait
     {
         if (!$mysql_operator_symbol) {
             $value = $this->convert_bracket($value);
+        } else {
+            if (a($name)) {
+                foreach ($name as $v) {
+                    if (is_string($v)) {
+                        $this->_mysql_operator_symbol[$v] = $v;
+                    }
+                }
+            } else {
+                if (is_string($name)) {
+                    $this->_mysql_operator_symbol[$name] = $name;
+                }
+            }
         }
 
         return $this->set_fill_data($name, $value);
@@ -354,6 +386,18 @@ trait OperateTrait
     {
         if (!$mysql_operator_symbol) {
             $value = $this->convert_bracket($value);
+        } else {
+            if (a($name)) {
+                foreach ($name as $v) {
+                    if (is_string($v)) {
+                        $this->_mysql_operator_symbol[$v] = $v;
+                    }
+                }
+            } else {
+                if (is_string($name)) {
+                    $this->_mysql_operator_symbol[$name] = $name;
+                }
+            }
         }
 
         return $this->set_fill_data($name, $value);
@@ -425,7 +469,15 @@ trait OperateTrait
         $dataset = &$mapped;
         unset($mapped);
 
-        return $this->fill($dataset, $excludes);
+        // return $this->fill($dataset, $excludes);
+
+        foreach ($dataset as $k => $v) {
+            if (!isset($excludes[$k])) {
+                $this->set_fill_data($k, $v);
+            }
+        }
+
+        return $this;
     }
 
     /**
@@ -839,6 +891,7 @@ trait OperateTrait
             $this->_group_by               = "";
             $this->_limit                  = "";
             $this->_max_by                 = "";
+            $this->_mysql_operator_symbol  = [];
             $this->_sql                    = "";
             $this->_table_cols             = "";
             $this->_table_cols_nums        = 0;
@@ -1016,6 +1069,7 @@ trait OperateTrait
             $this->_group_by               = "";
             $this->_limit                  = "";
             $this->_max_by                 = "";
+            $this->_mysql_operator_symbol  = [];
             $this->_sql                    = "";
             $this->_table_cols             = "";
             $this->_table_cols_nums        = 0;
@@ -1228,6 +1282,7 @@ trait OperateTrait
             $this->_group_by               = "";
             $this->_limit                  = "";
             $this->_max_by                 = "";
+            $this->_mysql_operator_symbol  = [];
             $this->_sql                    = "";
             $this->_table_cols             = "";
             $this->_table_cols_nums        = 0;
