@@ -630,7 +630,7 @@ trait OperateTrait
             } else {
                 $_debug_print       = $this->_debug_print;
                 $this->_debug_print = false;
-                $this->_raws        = $this->debug(false)->findBy(null, $sql_where, join(", ", array_keys($this->_vars)));
+                $this->_raws        = (clone $this)->debug(false)->findBy(null, $sql_where, join(", ", array_keys($this->_vars)));
                 $this->_debug_print = $_debug_print;
                 unset($_debug_print);
 
