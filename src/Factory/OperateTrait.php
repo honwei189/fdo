@@ -173,7 +173,7 @@ trait OperateTrait
                 ob_end_clean();
 
                 $this->write_exceptional($sql, $e->getMessage(), $error);
-                $this->error($rs, $sql);
+                $this->error($e, $sql);
                 unset($error);
                 unset($except);
             }

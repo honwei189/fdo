@@ -147,6 +147,19 @@ class FDOM
     /**
      * Remove the specified resource from storage.
      *
+     * Alias of destroy()
+     *
+     * @param  int  $id
+     * @return Response
+     */
+    public static function delete($id)
+    {
+        return self::destroy($id);
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
      * @param  int  $id
      * @return Response
      */
@@ -161,7 +174,7 @@ class FDOM
             $id = "id = $id";
         }
 
-        return self::call("where", $id)->delete();
+        return self::call("where", $id)->debug()->delete();
     }
 
     /**

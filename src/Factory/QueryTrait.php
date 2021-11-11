@@ -2152,7 +2152,7 @@ trait QueryTrait
                 // }
 
                 $sql = preg_replace("/(limit\s+(?<limit>(.*)))/i", "", $sql);
-                $rs  = $this->instance->prepare($sql . " limit 1");
+                $rs  = $this->instance->prepare($sql . (stripos($sql, "SELECT LAST_INSERT_ID") !== false ? "" : " limit 1"));
 
                 $this->affected_Rows = $rs->execute();
 
