@@ -622,7 +622,7 @@ class SQL
         $this->_table_joins_table      = null;
         $this->_table_left_joins       = null;
         $this->_table_left_joins_table = null;
-        $this->_vars                   = null;
+        $this->_vars                   = [];
         $this->username                = null;
         $this->user_id                 = null;
         $this->user_only               = null;

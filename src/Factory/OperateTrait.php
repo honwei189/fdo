@@ -33,6 +33,7 @@ trait OperateTrait
     public $fillable;
     private $prefill                = [];
     private $is_nofillable          = false;
+    private $is_noprefill           = false;
     private $_vars                  = [];
     private $_mysql_operator_symbol = [];
 
@@ -66,11 +67,28 @@ trait OperateTrait
 
     /**
      * Delete data from DB
-     * @param string $sql_where
+     *
+     * If $permanent = false, it will update the data and set is_active = 0.  Which means that your
+     * DB table must have the column -- "is_active" and it is boolean or integer(1)
+     *
+     * Example:
+     *
+     * $this->where('id', $id)->delete();
+     * $this->where('id', $id)->delete(false); // it will be update TABLE set is_active = 0 where id = $id;
+     * $this->delete("id = 1");
+     * $this->delete("id = 1", false); // it will be update TABLE set is_active = 0 where id = 1;
+     *
+     * @param bool|string $sql_where SQL where statement.  If passing by boolean, it will $permanent
+     * @param bool $permanent Is delete the record permanently.  Default is YES
      * @return boolean
      */
-    public function delete($sql_where = null)
+    public function delete($sql_where = null, $permanent = true)
     {
+        if (is_bool($sql_where)) {
+            $sql_where = null;
+            $permanent = $sql_where;
+        }
+
         if ($sql_where === null) {
             if ($this->_where === null) {
                 $sql_where = ($this->user_only && is_int($this->user_id) ? "created_by = " . $this->user_id : "") . " and id = " . (int) $this->_id;
@@ -92,7 +110,43 @@ trait OperateTrait
 
         $stat = false;
 
-        $sql = "delete from $this->_table where " . $sql_where;
+        if ($permanent) {
+            $sql = "delete from $this->_table where " . $sql_where;
+        } else {
+            if (!$this->is_noprefill) {
+                $this->_vars = array_merge($this->_vars, $this->prefill);
+            }
+
+            unset($this->{"crdate"});
+            unset($this->{"createdate"});
+            unset($this->{"crdt"});
+            unset($this->{"cdt"});
+            unset($this->{"crby"});
+            unset($this->{"createby"});
+            unset($this->{"cby"});
+            unset($this->{"created_at"});
+            unset($this->{"created_by"});
+
+            // unset($this->{"lupdate"});
+            // unset($this->{"ldt"});
+            // unset($this->{"lupdt"});
+            // unset($this->{"lupby"});
+            // unset($this->{"lupdateby"});
+            // unset($this->{"updatedate"});
+            // unset($this->{"updated_at"});
+            // unset($this->{"updated_by"});
+
+            unset($this->{"fillable"});
+            unset($this->_vars['fillable']);
+
+            $this->build_store_attributes("update");
+
+            if ($this->_id > 0) {
+                $sql = "update $this->_table set is_active = 0 " . (a($this->_vars) ? ", " : "") . join(", ", $this->_vars) . " where " . $sql_where;
+            } else {
+                $sql = "update $this->_table set is_active = 0 " . (a($this->_vars) ? ", " : "") . join(", ", $this->_vars) . ", id = LAST_INSERT_ID(id) where " . $sql_where;
+            }
+        }
 
         if ($this->_get_sql) {
             return $sql;
@@ -123,6 +177,7 @@ trait OperateTrait
             }
         }
 
+        $this->_vars                   = [];
         $this->_raws                   = null;
         $this->_where                  = "";
         $this->_count_by               = "";
@@ -564,6 +619,19 @@ trait OperateTrait
     }
 
     /**
+     * Ignore prefill
+     *
+     * @param bool $bool
+     * @return FDO
+     */
+    public function noprefill(bool $bool = true)
+    {
+        $this->is_noprefill = $bool;
+
+        return $this;
+    }
+
+    /**
      * Pre-defined what data to stores in database.  Alias of set_fill_data()
      *
      * Applicable to add(), create(), save(), store(), update() only
@@ -623,7 +691,10 @@ trait OperateTrait
             }
 
             // $this->_vars = [...$this->_vars, ...$this->prefill];
-            $this->_vars = array_merge($this->_vars, $this->prefill);
+
+            if (!$this->is_noprefill) {
+                $this->_vars = array_merge($this->_vars, $this->prefill);
+            }
 
             if (!is_value($sql_where)) {
                 $new_data = true;
@@ -884,7 +955,7 @@ trait OperateTrait
 
             unset($keys);
             unset($raws);
-            $this->_vars                   = null;
+            $this->_vars                   = [];
             $this->_raws                   = null;
             $this->_where                  = "";
             $this->_order_by               = "";
@@ -918,7 +989,9 @@ trait OperateTrait
     public function store()
     {
         if (is_array($this->_vars) && count($this->_vars) > 0) {
-            $this->_vars = array_merge($this->_vars, $this->prefill);
+            if (!$this->is_noprefill) {
+                $this->_vars = array_merge($this->_vars, $this->prefill);
+            }
 
             unset($this->{"deldate"});
             unset($this->{"deletedate"});
@@ -1062,7 +1135,7 @@ trait OperateTrait
 
             unset($keys);
             unset($raws);
-            $this->_vars                   = null;
+            $this->_vars                   = [];
             $this->_raws                   = null;
             $this->_where                  = "";
             $this->_order_by               = "";
@@ -1106,7 +1179,9 @@ trait OperateTrait
         }
 
         if (is_array($this->_vars) && count($this->_vars) > 0) {
-            $this->_vars = array_merge($this->_vars, $this->prefill);
+            if (!$this->is_noprefill) {
+                $this->_vars = array_merge($this->_vars, $this->prefill);
+            }
 
             if ($sql_where === null) {
                 if (!str($this->_where)) {
@@ -1121,26 +1196,26 @@ trait OperateTrait
                 }
             }
 
-            if (isset($this->_vars['status']) && $this->_vars['status'] == "I") {
-                unset($this->{"lupdate"});
-                unset($this->{"ldt"});
-                unset($this->{"lupdt"});
-                unset($this->{"lupby"});
-                unset($this->{"lupdateby"});
-                unset($this->{"updatedate"});
-                unset($this->{"updated_at"});
-                unset($this->{"updated_by"});
-            } else {
-                unset($this->{"deldate"});
-                unset($this->{"deletedate"});
-                unset($this->{"dldt"});
-                unset($this->{"ddt"});
-                unset($this->{"dby"});
-                unset($this->{"deleteby"});
-                unset($this->{"dby"});
-                unset($this->{"deleted_by"});
-                unset($this->{"deleted_at"});
-            }
+            // if (isset($this->_vars['status']) && $this->_vars['status'] == "I") {
+            //     unset($this->{"lupdate"});
+            //     unset($this->{"ldt"});
+            //     unset($this->{"lupdt"});
+            //     unset($this->{"lupby"});
+            //     unset($this->{"lupdateby"});
+            //     unset($this->{"updatedate"});
+            //     unset($this->{"updated_at"});
+            //     unset($this->{"updated_by"});
+            // } else {
+            //     unset($this->{"deldate"});
+            //     unset($this->{"deletedate"});
+            //     unset($this->{"dldt"});
+            //     unset($this->{"ddt"});
+            //     unset($this->{"dby"});
+            //     unset($this->{"deleteby"});
+            //     unset($this->{"dby"});
+            //     unset($this->{"deleted_by"});
+            //     unset($this->{"deleted_at"});
+            // }
 
             unset($this->{"crdate"});
             unset($this->{"createdate"});
@@ -1275,7 +1350,7 @@ trait OperateTrait
             unset($keys);
             unset($raws);
             unset($sql_print);
-            $this->_vars                   = null;
+            $this->_vars                   = [];
             $this->_raws                   = null;
             $this->_where                  = "";
             $this->_order_by               = "";
