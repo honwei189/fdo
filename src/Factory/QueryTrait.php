@@ -946,7 +946,7 @@ trait QueryTrait
                 $count = true;
             }
 
-            list($sql, $mode) = $this->gen_select_sql($table, $id, $table_cols);
+            list($sql, $mode, $table_cols) = $this->gen_select_sql($table, $id, $table_cols);
 
             if ($this->_table_cols_nums < 2) {
                 $count = true;
@@ -988,7 +988,18 @@ trait QueryTrait
                 // }
 
                 if ($count) {
-                    return $this->read_one_sql($sql, false, \PDO::FETCH_COLUMN, 0);
+                    $data = $this->read_one_sql($sql, false, \PDO::FETCH_COLUMN, 0);
+
+                    $_ = preg_split('/,/', $table_cols, -1, \PREG_SPLIT_NO_EMPTY);
+
+                    if ($table_cols != "*" && count($_) == 1) {
+                        unset($_);
+                        return (is_array($data) ? array_values($data)[0] : null);
+                    } else {
+                        unset($_);
+                        return $data;
+                    }
+
                     // return $this->read_one_sql($sql, false, $this->fetch_mode->mode, 0);
                 } else {
                     return $this->read_one_sql($sql, false, $this->fetch_mode->mode);
@@ -3276,47 +3287,92 @@ trait QueryTrait
     public function where($sql_where, $value = null)
     {
         // $this->_where = $sql_where;
-        $str = false;
+        $is_value = false;
 
-        if (str($this->_where)) {
+        if (is_value($this->_where)) {
             $this->_where .= " ";
-            $str = true;
+            $is_value = true;
         }
 
         if (is_array($sql_where) && count($sql_where) > 0) {
-            if (is_assoc_array($sql_where) && is_null($value)) {
+            // if (!$is_value) {
+            //     $sql_where[0] = preg_replace("/^(and)/si", "", $sql_where[0]);
+            // } else {
+            //     if (stripos($sql_where[0], "and") !== 0) {
+            //         $sql_where[0] = "and " . $sql_where[0];
+            //     }
+            // }
+
+            if ($this->is_assoc_array($sql_where) && is_null($value)) {
                 foreach ($sql_where as $k => $v) {
-                    if (!is_array($v) && str($v)) {
+                    if (!is_array($v) && is_value($v)) {
+                        // if (is_int($k)){
+                        //     preg_match("/\s*(=|>=|<=|>|<)/si", $v, $reg);
+
+                        //     pre($reg);
+                        // }
+
                         $v = trim($v);
 
                         if (is_int($k)) {
-                            $v = trim($v);
+                            $sql_where[$k] = trim(preg_replace("/^(and)/si", "", $v));
                         } else {
-                            $sql_where[$k] = "$k = " . trim(preg_replace("/^(and)/si", "", (is_numeric($v) ? $v : $this->process_data_attribute($v))));
+                            // $sql_where[$k] = "$k = " . trim(preg_replace("/^(and)/si", "", (is_numeric($v) ? $v : "'$v'")));
+                            $sql_where[$k] = "$k = " . trim(preg_replace("/^(and)/si", "", $this->process_data_attribute($v)));
                         }
+
+                    } else {
+                        unset($sql_where[$k]);
                     }
                 }
             } else {
                 foreach ($sql_where as $k => $v) {
-                    if (!is_array($value) && str($value)) {
-                        if (!str($v)) {
+                    if (!is_array($value) && is_value($value)) {
+                        if (!is_value($v)) {
                             unset($sql_where[$k]);
                         } else {
+                            // $sql_where[$k] = "$v = " . (is_numeric($value) ? $value : "'$value'");
                             $sql_where[$k] = "$v = " . $this->process_data_attribute($value);
                         }
                     } else {
-                        if (!str($v)) {
+                        if (!is_value($v)) {
                             unset($sql_where[$k]);
                         } else {
-                            $sql_where[$k] = trim(preg_replace("/^(and)/si", "", trim($this->process_data_attribute($v))));
+                            $sql_where[$k] = trim(preg_replace("/^(and)/si", "", trim($v)));
                         }
                     }
                 }
             }
 
-            $this->_where .= ($str ? " and " : "") . join(" and ", $sql_where);
+            // $sql_where = preg_replace("/(and\s)/si", "", $sql_where);
+            // $this->_where .= str_replace("and and", " and ", join((is_value($this->_where) ? " " : " and "), $sql_where));
+            $this->_where .= ($is_value ? " and " : "") . join(" and ", $sql_where);
             unset($sql_where);
-        } else if (str($sql_where)) {
+        } else if (is_value($sql_where)) {
+            // if (!$is_value) {
+            //     $sql_where = preg_replace("/^(and)/si", "", $sql_where);
+            // } else {
+            //     if (stripos($sql_where, "and") !== 0) {
+            //         $sql_where = "and $sql_where";
+            //     }
+            // }
+
+            // if (is_array($sql_where)) {
+            //     foreach ($sql_where as $k => $v) {
+            //         if (is_value($v)) {
+            //             $v = trim(preg_replace("/^(and)/si", "", $v));
+            //             $this->_where .= ($is_value ? " and " : "") . $v;
+            //         }
+            //     }
+            // } else {
+            //     if (is_value($sql_where)) {
+            //         $sql_where = trim(preg_replace("/^(and)/si", "", $sql_where));
+            //         $this->_where .= ($is_value ? " and " : "") . $sql_where;
+            //     }
+            // }
+
+            // $sql_where = trim(preg_replace("/^(and)/si", "", $sql_where));
+
             if (is_array($sql_where)) {
                 $sql_where = preg_replace("/^and/si", "", $sql_where);
                 if (is_array($sql_where)) {
@@ -3329,7 +3385,7 @@ trait QueryTrait
             $sql_where = trim($sql_where);
 
             if (is_array($value) && count($value) > 0) {
-                $this->_where .= ($str ? " and " : "") . "$sql_where in (" . join(", ", array_map(
+                $this->_where .= ($is_value ? " and " : "") . "$sql_where in (" . join(", ", array_map(
                     function ($id) {
                         if (!is_numeric($id)) {
                             if (substr($id, 0, 1) != "'" && substr($id, -1, 1) != "'") {
@@ -3344,8 +3400,8 @@ trait QueryTrait
                     $value
                 )) . ")";
             } else {
-                if (!is_array($value) && str($value)) {
-                    $this->_where .= ($str ? " and " : "") . "$sql_where = " . $this->process_data_attribute($value);
+                if (!is_array($value) && is_value($value)) {
+                    $this->_where .= ($is_value ? " and " : "") . "$sql_where = " . $this->process_data_attribute($value);
 
                     // switch ($value) {
                     //     case "now()":
@@ -3355,28 +3411,22 @@ trait QueryTrait
                     //     case "current_timestamp()":
                     //     case "year(curdate())":
                     //     case "month(curdate())":
-                    //         $this->_where .= ($str ? " and " : "") . "$sql_where = $value";
+                    //         $this->_where .= ($is_value ? " and " : "") . "$sql_where = $value";
                     //         break;
 
                     //     default:
                     //         if (stripos($value, "(case when") === false && (substr($value, 0, 1) != "(" && substr($value, 1, -1) != ")")) {
-                    //             $this->_where .= ($str ? " and " : "") . "$sql_where = " . (is_numeric($value) ? $value : "'$value'");
+                    //             $this->_where .= ($is_value ? " and " : "") . "$sql_where = " . (is_numeric($value) ? $value : "'$value'");
                     //         } else {
-                    //             $this->_where .= ($str ? " and " : "") . "$sql_where = $value";
+                    //             $this->_where .= ($is_value ? " and " : "") . "$sql_where = $value";
                     //         }
                     //         break;
                     // }
 
-                    // if ($value != "now()" && $value != "current_date" && $value != "current_timestamp" && $value != "year(curdate())" && $value != "month(curdate())" && stripos($value, "(case when") === false && (substr($value, 0, 1) != "(" && substr($value, 1, -1) != ")")) {
-                    //     $this->_where .= ($str ? " and " : "") . "$sql_where = " . (is_numeric($value) ? $value : "'$value'");
-                    // } else {
-                    //     $this->_where .= ($str ? " and " : "") . "$sql_where = $value";
-                    // }
-
                 } else {
-                    if (!str($value)) {
-                        if (str($sql_where)) {
-                            $this->_where .= ($str ? " and " : "") . $sql_where;
+                    if (!is_value($value)) {
+                        if (is_value($sql_where)) {
+                            $this->_where .= ($is_value ? " and " : "") . $sql_where;
 
                             // if(preg_match("/^\(.*\)$/isU", $sql_where)){
                             if (!preg_match("/^(and|or)\s/isU", $sql_where) && (substr($sql_where, 0, 1) != "(" && substr($sql_where, -1) != ")")) {
@@ -3386,12 +3436,12 @@ trait QueryTrait
                             }
                         }
                     } else {
-                        $this->_where .= ($str ? " and " : "") . $sql_where;
+                        $this->_where .= ($is_value ? " and " : "") . $sql_where;
                     }
                 }
             }
 
-            unset($str);
+            unset($is_value);
         }
 
         return $this;
@@ -3559,7 +3609,7 @@ trait QueryTrait
             }
         }
 
-        return [$this->_sql, $mode];
+        return [$this->_sql, $mode, $select_cols_name];
     }
 
     /**

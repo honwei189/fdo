@@ -232,12 +232,20 @@ class FDOM
 
     public static function findOrFail($id)
     {
+        if (is_null($id)) {
+            $id = self::$id;
+        }
+
+        if (!is_int($id)) {
+            $id = self::call("get_id", $id);
+        }
+
         self::get_table();
         $o = new static;
         // return self::call("is_exists_id", $id) && self::$id = $id;
         // self::$data = self::call("get", [self::$_table, "*", $id]);
         // $o::$data = self::call("by_id", $id)->get();
-        $o->data = self::call("by_id", $id)->get();
+        $o->data = self::call("by_id", $id)->debug(false)->get();
 
         if (is_array($o->data) && count($o->data) > 0) {
             // pre(self::$parent_instance->fillable);
