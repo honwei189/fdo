@@ -151,7 +151,7 @@ trait QueryTrait
      * @param string $name Optional.  Derived table name
      * @return \honwei189\FDO\SQL
      */
-    public function derived(\honwei189\FDO\SQL $object, $name = null)
+    public function derived(\honwei189\FDO\SQL$object, $name = null)
     {
         $this->derived = true;
 
@@ -1474,6 +1474,19 @@ trait QueryTrait
             $start_from_nums  = $this->limit_data;
         }
 
+        if (isset($_GET['page']) && is_array($this->url_args) && count($this->url_args) > 0) {
+            foreach ($this->url_args as $k => $v) {
+                if (!is_int($k)) {
+                    if (isset($_GET[$k]) && trim($_GET[$k]) != trim($v)) {
+                        $this->page_id    = 1;
+                        $this->limit_data = 0;
+                        $start_from_nums  = $this->limit_data;
+                        break;
+                    }
+                }
+            }
+        }
+
         $this->_limit = " limit $start_from_nums, $get_nums_of_data";
         return $this;
     }
@@ -1795,7 +1808,7 @@ trait QueryTrait
                 unset($rs);
 
                 return $Count;
-            } catch (\PDOException $e) {
+            } catch (\PDOException$e) {
                 $this->error($rs, $sql);
 
                 ob_start();
@@ -1895,7 +1908,7 @@ trait QueryTrait
                     }
 
                     $this->error($rs, $sql);
-                } catch (\PDOException $e) {
+                } catch (\PDOException$e) {
                     ob_start();
                     // print_r($e->errorInfo);
                     $except = new \Exception;
@@ -2111,7 +2124,7 @@ trait QueryTrait
                     // }
                 }
 
-            } catch (\PDOException $e) {
+            } catch (\PDOException$e) {
                 ob_start();
                 print_r($e->errorInfo);
                 $except = new \Exception;
@@ -2294,7 +2307,7 @@ trait QueryTrait
                         return $rs->fetch(\PDO::FETCH_ASSOC);
                     }
                 }
-            } catch (\PDOException $e) {
+            } catch (\PDOException$e) {
                 //$this->instance->setAttribute( \PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
                 ob_start();
                 // print_r($e->errorInfo);
@@ -2336,7 +2349,7 @@ trait QueryTrait
                 $rs->setFetchMode($mode); //FETCH_ROW
                 $this->error($rs, $sql);
                 return $rs;
-            } catch (\PDOException $e) {
+            } catch (\PDOException$e) {
                 ob_start();
                 // print_r($e->errorInfo);
                 $except = new \Exception;
@@ -3760,7 +3773,7 @@ trait QueryTrait
      * @param int $mode PDO FETCH mode
      * @param int $column_num Column number.  Specify which db table column you want
      */
-    private function fetch_data_process(\PDOStatement $rs, int $mode = \PDO::FETCH_ASSOC, $column_num = null)
+    private function fetch_data_process(\PDOStatement$rs, int $mode = \PDO::FETCH_ASSOC, $column_num = null)
     {
         $is_object = ($this->fetch_mode_type($mode) == "object" ? true : false);
         $data      = [];
@@ -3853,7 +3866,7 @@ trait QueryTrait
      * @param int $mode PDO FETCH mode
      * @param int $column_num Column number.  Specify which db table column you want
      */
-    private function fetch_to_data_collection(\PDOStatement $rs, int $mode = \PDO::FETCH_ASSOC, $column_num = null)
+    private function fetch_to_data_collection(\PDOStatement$rs, int $mode = \PDO::FETCH_ASSOC, $column_num = null)
     {
         $is_object = ($this->fetch_mode_type($mode) == "object" ? true : false);
 
