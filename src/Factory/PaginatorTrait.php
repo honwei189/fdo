@@ -28,12 +28,51 @@ namespace honwei189\FDO\Factory;
  */
 trait PaginatorTrait
 {
+    private $url_args = [];
+
     /**
      * @access private
      * @internal
      */
     public function __construct()
     {
+    }
+
+    /**
+     * To generate pagination, pass rows of data per page, and also pass an array of arguments
+     * to generate URL
+     *
+     * This is alternative function to use the function limit() and pagination(), reduce calling two function
+     * to generate pagination.
+     *
+     * @param int $nums_data The number of data to be displayed per page.
+     * @param array $url_args This is an array of arguments that you want to pass to the navigator to generate URL.
+     * @param bool $copy_uri If true, it will copy the current URL parameters and append to $url_args.
+     *
+     * @return An array with two elements.
+     */
+    public function paging($nums_data = 50, $url_args = [], $copy_uri = false)
+    {
+        $this->url_args = &$url_args;
+
+        if ($copy_uri) {
+            if (count($_GET) > 0) {
+                foreach ($_GET as $key => $value) {
+                    // pre($key . " - " . $value . " : " . (isset($this->url_args[$key])) );
+                    if ($key != "p_id" && !isset($this->url_args[$key])) {
+                        $this->url_args[$key] = $value;
+                    }
+                }
+            }
+        }
+
+        // pre($this->Limit($sql, (int) $nums_data));
+        // exit;
+
+        return [
+            'data'      => $this->limit((int) $nums_data)->findAll(),
+            'navigator' => $this->paginator(null, $this->url_args),
+        ];
     }
 
     /**
@@ -46,11 +85,11 @@ trait PaginatorTrait
      * print_r($find->find("id, m_name"));
      * echo $find->pagination();
      *
-     * @param integer $nums_data Get number of data per times
-     * @param boolean $is_URL_auto_rewrite
+     * @param integer $nums_data The total number of data.
+     * @param array $url_args This is an array of arguments that you want to pass to the navigator to generate URL.
      * @return string
      */
-    public function pagination($nums_data = null, $is_URL_auto_rewrite = true)
+    public function pagination($nums_data = null, $url_args = [])
     {
         // $col       = "";
         $total = 0;
@@ -93,8 +132,32 @@ trait PaginatorTrait
         } else {
             $p_id = $_GET['page'];
         }
-        
+
         $web_vars = $_SERVER['REQUEST_URI'];
+
+        if (is_string($url_args)) {
+            $Web_vars = $url_args;
+        } else {
+            $Web_vars = "/";
+
+            foreach ($url_args as $k => $v) {
+                // pre($k . " => " . $v . " = " . $_GET[$k]);
+
+                if (is_int($k)) {
+                    if ($k == 0 && $Web_vars == "/") {
+                        $Web_vars .= $v;
+                    } else {
+                        $Web_vars .= (stripos($Web_vars, "?") !== false) ? "&" . $v : "?" . $v;
+                    }
+                } else {
+                    $Web_vars .= (stripos($Web_vars, "?") !== false) ? "&" . $k . "=" . $v : "?" . $k . "=" . $v;
+                }
+
+                if (isset($_GET[$k]) && trim($_GET[$k]) != trim($v)) {
+                    $p_id = "1";
+                }
+            }
+        }
 
         if (is_array($_POST) && count($_POST) > 0) {
             foreach ($_POST as $Key => $value) {
@@ -107,11 +170,11 @@ trait PaginatorTrait
             unset($_Web_vars);
         }
 
-        if ($is_URL_auto_rewrite === true && count($_GET) === 0) {
-            if (substr($web_vars, -1) !== "/") {
-                $web_vars .= "/";
-            }
-        }
+        // if ($is_URL_auto_rewrite === true && count($_GET) === 0) {
+        //     if (substr($web_vars, -1) !== "/") {
+        //         $web_vars .= "/";
+        //     }
+        // }
 
         if (is_null($nums_data)) {
             $nums_data = $total;
@@ -131,9 +194,9 @@ trait PaginatorTrait
             }
         }
 
-        if ($is_URL_auto_rewrite === true && count($_GET) === 0) {
-            $URL = $web_vars . $URL;
-        }
+        // if ($is_URL_auto_rewrite === true && count($_GET) === 0) {
+        //     $URL = $web_vars . $URL;
+        // }
 
         if ($p_id <= 10) {
             $init = 1;
@@ -190,7 +253,7 @@ trait PaginatorTrait
                 // if ($value == "...") {
                 //     $ret .= "    <li class=\"paginate_button page-item" . (($value == $p_id) ? " active" : "") . "\">$value</li>\n";
                 // } else {
-                    $ret .= "    <li class=\"paginate_button page-item" . (($value == $p_id) ? " active" : "") . "\"><a class=\"page-link\" href=\"" . str_replace("{paging}", $value, $URL) . "\">$value</a></li>\n";
+                $ret .= "    <li class=\"paginate_button page-item" . (($value == $p_id) ? " active" : "") . "\"><a class=\"page-link\" href=\"" . str_replace("{paging}", $value, $URL) . "\">$value</a></li>\n";
                 // }
             }
 
