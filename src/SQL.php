@@ -653,13 +653,44 @@ class SQL
     /**
      * Commit transaction and write all data into DB
      */
+// Replace the existing commit method in SQL.php
+    /**
+     * Commits the current transaction.
+     * Retries on "lock wait timeout" errors.
+     */
     public function commit()
     {
-        if (!$this->_soft_update) {
-            $this->commit_trx();
+        if ($this->_soft_update) {
+            $this->_trx = false;
+            return;
         }
 
-        $this->_trx = false;
+        $this->_trx     = false;
+        $retry_interval = 2; // seconds
+        $max_retries    = 5;
+        $retry_count    = 0;
+
+        while (true) {
+            try {
+                if ($this->instance->inTransaction()) {
+                    $this->instance->commit();
+                }
+                break; // Exit loop on success
+            } catch (\PDOException $e) {
+                // Check for lock wait timeout error code (MySQL: 1205)
+                if ($e->getCode() == '40001' || $e->getCode() == 'HY000' && strpos($e->getMessage(), 'Lock wait timeout') !== false) {
+                    if ($retry_count >= $max_retries) {
+                        throw $e; // Max retries reached
+                    }
+                    // Wait and retry
+                    sleep($retry_interval);
+                    $retry_count++;
+                } else {
+                    // Rethrow other exceptions immediately
+                    throw $e;
+                }
+            }
+        }
     }
 
     public function commit_trx()

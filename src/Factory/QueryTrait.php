@@ -74,6 +74,9 @@ trait QueryTrait
     private $_limit                  = "";
     private $_max_by                 = "";
     private $_order_by               = "";
+    private $_having                 = "";
+    private $_for_update             = "";
+    private $_with_clauses           = [];
 
     /**
      * @access private
@@ -3517,113 +3520,106 @@ trait QueryTrait
      * @param string|array $select_cols_name Table columns name (if $find_by_column_name = TABLE NAME)
      * @return array
      */
-    private function gen_select_sql($find_by_column_name = null, $data = null, $select_cols_name = "*")
-    {
-        if ($this->_set_encrypt_id) {
-            $this->set_encrypt_id();
+private function gen_select_sql($find_by_column_name = null, $data = null, $select_cols_name = "*")
+{
+    if ($this->_set_encrypt_id) {
+        $this->set_encrypt_id();
+    }
+
+    $sql = "";
+    $mode = $this->fetch_mode->mode;
+    $table = $this->_table . (str($this->_table_alias) ? " as " . $this->_table_alias : "");
+    $table_ = [];
+    $sql_ = [];
+    $table_[$this->_table] = $table;
+
+    list($select_cols_name, $mode) = $this->_gen_select_cols($find_by_column_name, $select_cols_name);
+
+    if (is_array($this->_table_join)) {
+        foreach ($this->_table_join as $k => $v) {
+            $table_[$k] = $v[0];
+            $sql_[$k] = $v[2];
         }
+    }
 
-        $sql                   = "";
-        $mode                  = $this->fetch_mode->mode;
-        $table                 = $this->_table . (str($this->_table_alias) ? " as " . $this->_table_alias : "");
-        $table_                = array();
-        $sql                   = "";
-        $sql_                  = array();
-        $table_[$this->_table] = $table;
-
-        list($select_cols_name, $mode) = $this->_gen_select_cols($find_by_column_name, $select_cols_name);
-
-        if (is_array($this->_table_join)) {
-            foreach ($this->_table_join as $k => $v) {
-                $table_[$k] = $v[0];
-                $sql_[$k]   = $v[2];
+    if (is_array($this->_table_joins)) {
+        foreach ($this->_table_joins as $k => $v) {
+            if (isset($table_[$k])) {
+                $table_[$k] .= join(" ", $v);
             }
         }
+    }
 
-        if (is_array($this->_table_joins)) {
-            foreach ($this->_table_joins as $k => $v) {
-                if (isset($table_[$k])) {
-                    $table_[$k] .= join(" ", $v);
-                }
+    if (is_array($this->_table_left_joins)) {
+        foreach ($this->_table_left_joins as $k => $v) {
+            if (isset($table_[$k])) {
+                $table_[$k] .= join(" ", $v);
             }
         }
+    }
 
-        if (is_array($this->_table_left_joins)) {
-            foreach ($this->_table_left_joins as $k => $v) {
-                if (isset($table_[$k])) {
-                    $table_[$k] .= join(" ", $v);
-                }
-            }
+    $table = join(", ", $table_);
+    $sql = join(" and ", $sql_);
+
+    if (str($this->_where)) {
+        $sql .= (str($sql) ? " and " : "") . $this->_where;
+    }
+
+    // --- NEW: Build WITH AS clause ---
+    $with_clause = "";
+    if (!empty($this->_with_clauses)) {
+        $with_parts = [];
+        foreach ($this->_with_clauses as $name => $query) {
+            $with_parts[] = "$name AS ($query)";
+        }
+        $with_clause = "WITH " . implode(", \n", $with_parts) . " ";
+    }
+    // --- END NEW ---
+
+    if (isset($this->_count_by) && str($this->_count_by)) {
+        $this->_limit = "";
+        $this->_sql = "select " . $this->_count_by . " as count from " . $table . (str($sql) ? " where $sql" : "") . $this->_group_by . $this->_having . $this->_order_by . $this->_for_update;
+    } else if (isset($this->_sum_by) && str($this->_sum_by)) {
+        $this->_sql = "select " . $this->_sum_by . " from " . $table . (str($sql) ? " where $sql" : "") . $this->_group_by . $this->_having . $this->_order_by . $this->_for_update;
+    } else {
+        if (!str($select_cols_name)) {
+            $select_cols_name = "*";
         }
 
-        $table = join(", ", $table_);
-        $sql   = join(" and ", $sql_);
-
-        if (str($this->_where)) {
-            $sql .= (str($sql) ? " and " : "") . $this->_where;
-        }
-
-        if (isset($this->_count_by) && str($this->_count_by)) {
-            $this->_limit = "";
-
-            if ($this->_sql_without_select) {
-                $this->_sql = "from " . $table . (str($sql) ? " where $sql" : "") . $this->_group_by . $this->_order_by;
+        if ($this->_set_sql_to_sub) {
+            if (str($this->_sql)) {
+                $this->_sql = "select $select_cols_name from ( " . $this->_sql . " ) as t ";
             } else {
-                if ($this->_set_sql_to_sub) {
-                    $this->_sql = "select " . $this->_count_by . " as count from ( " . $this->_sql . " ) ";
-                } else {
-                    $this->_sql = "select " . $this->_count_by . " as count from " . $table;
-                }
-
-                $this->_sql .= (str($sql) ? " where $sql" : "") . $this->_group_by . $this->_order_by;
-            }
-
-        } else if (isset($this->_sum_by) && str($this->_sum_by)) {
-            if ($this->_sql_without_select) {
-                $this->_sql = "from " . $table . (str($sql) ? " where $sql" : "") . $this->_group_by . $this->_order_by;
-            } else {
-                if ($this->_set_sql_to_sub) {
-                    $this->_sql = "select " . $this->_sum_by . " from ( " . $this->_sql . " ) ";
-                } else {
-                    $this->_sql = "select " . $this->_sum_by . " from " . $table;
-                }
-
-                $this->_sql .= (str($sql) ? " where $sql" : "") . $this->_group_by . $this->_order_by;
+                $this->_sql = "select $select_cols_name from " . $table;
             }
         } else {
-            if ($this->_sql_without_select) {
-                $this->_sql = "from " . $table . (str($sql) ? " where $sql" : "") . $this->_group_by . $this->_order_by . $this->_limit;
-            } else {
-                if (!str($select_cols_name)) {
-                    $select_cols_name = "*";
-                }
-
-                if ($this->_set_sql_to_sub) {
-                    if (str($this->_sql)) {
-                        $this->_sql = "select $select_cols_name from ( " . $this->_sql . " ) as t ";
-                    } else {
-                        $this->_sql = "select $select_cols_name from " . $table;
-                    }
-                } else {
-                    $this->_sql = "select $select_cols_name from " . $table;
-                }
-
-                if ($this->derived) {
-                    $this->_sql = "select $select_cols_name from " . (is_value($this->derived_sql) ? "( " . $this->derived_sql . " ) as $table" : "") . (is_value($sql) ? " where $sql" : "") . $this->_group_by . $this->_order_by . $this->_limit;
-
-                    if (str($this->_table_alias)) {
-                        $this->_table_alias      = "";
-                        $this->_table_alias_temp = null;
-                    }
-                } else {
-                    $this->_sql .= (str($sql) ? " where $sql" : "") . $this->_group_by . $this->_order_by . $this->_limit;
-                    $this->_sql_without_limit = "select '' from " . $table . (str($sql) ? " where $sql" : "") . $this->_group_by;
-                }
-            }
+             $this->_sql = "select $select_cols_name from " . $table;
         }
 
-        return [$this->_sql, $mode, $select_cols_name];
+        if ($this->derived) {
+            $this->_sql = "select $select_cols_name from " . (is_value($this->derived_sql) ? "( " . $this->derived_sql . " ) as $table" : "") . (is_value($sql) ? " where $sql" : "") . $this->_group_by . $this->_having . $this->_order_by . $this->_limit . $this->_for_update;
+            if (str($this->_table_alias)) {
+                $this->_table_alias = "";
+                $this->_table_alias_temp = null;
+            }
+        } else {
+            // --- UPDATED: Added _having and _for_update ---
+            $this->_sql .= (str($sql) ? " where $sql" : "") . $this->_group_by . $this->_having . $this->_order_by . $this->_limit . $this->_for_update;
+            // --- END UPDATE ---
+            $this->_sql_without_limit = "select '' from " . $table . (str($sql) ? " where $sql" : "") . $this->_group_by . $this->_having;
+        }
     }
+
+    // Prepend the WITH clause to the final generated SQL
+    if (!empty($with_clause)) {
+        $this->_sql = $with_clause . $this->_sql;
+    }
+
+    // Clear WITH clauses to not affect subsequent queries
+    $this->_with_clauses = [];
+
+    return [$this->_sql, $mode, $select_cols_name];
+}
 
     /**
      * Generate SELECT statement table columns by parameters options
@@ -3918,4 +3914,52 @@ trait QueryTrait
         unset($rows);
         unset($is_object);
     }
+
+// Add this method to QueryTrait.php
+/**
+ * Adds a HAVING clause to the query.
+ *
+ * @param string $conditions The conditions for the HAVING clause.
+ * @return self
+ */
+public function having(string $conditions): self
+{
+    $this->_having = " HAVING " . $conditions;
+    return $this;
+}
+
+/**
+ * Adds a FOR UPDATE clause to the SELECT query for pessimistic locking.
+ *
+ * @return self
+ */
+public function for_update(): self
+{
+    $this->_for_update = " FOR UPDATE";
+    return $this;
+}
+
+/**
+ * Adds a Common Table Expression (CTE) using a WITH clause.
+ *
+ * @param string $name The name of the CTE.
+ * @param string $query The subquery for the CTE.
+ * @return self
+ */
+public function with(string $name, string $query): self
+{
+    $this->_with_clauses[$name] = $query;
+    return $this;
+}
+
+/**
+ * Clears all previously defined WITH clauses.
+ *
+ * @return self
+ */
+public function clear_with(): self
+{
+    $this->_with_clauses = [];
+    return $this;
+}
 }
